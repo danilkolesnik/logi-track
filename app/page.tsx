@@ -1,8 +1,11 @@
 import Link from 'next/link';
+import Header from '@/components/Header';
 
 export default function Home() {
   return (
-    <main className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-500 to-purple-600">
+    <>
+      {/* <Header showPublicNav /> */}
+      <main className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
       <div className="text-center text-white max-w-2xl">
         <h1 className="text-5xl md:text-6xl font-bold mb-4">Logi Track</h1>
         <p className="text-xl md:text-2xl mb-10 opacity-95">
@@ -24,5 +27,6 @@ export default function Home() {
         </div>
       </div>
     </main>
+    </>
   );
 }

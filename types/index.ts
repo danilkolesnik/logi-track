@@ -1,7 +1,3 @@
-/**
- * Central export point for all types
- */
-
 export type { CookieToSet } from './common';
 export type { RootLayoutProps } from './components';
 export type {
@@ -9,3 +5,10 @@ export type {
   RequestAccessFormData,
   ForgotPasswordFormData,
 } from './forms';
+export type {
+  AccessRequest,
+  Shipment,
+  Document,
+  ShipmentTimeline,
+  ApiResponse,
+} from './api';

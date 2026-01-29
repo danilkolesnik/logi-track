@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import StoreProvider from "@/lib/store/provider";
+import AuthProvider from "@/lib/auth/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Logi Track",
@@ -13,9 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <StoreProvider>{children}</StoreProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <div suppressHydrationWarning>
+          <StoreProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </StoreProvider>
+        </div>
       </body>
     </html>
   );
