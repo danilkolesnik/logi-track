@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import StoreProvider from "@/lib/store/provider";
-import AuthProvider from "@/lib/auth/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Logi Track",
@@ -18,7 +17,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <div suppressHydrationWarning>
           <StoreProvider>
-            <AuthProvider>{children}</AuthProvider>
+            {children}
           </StoreProvider>
         </div>
       </body>

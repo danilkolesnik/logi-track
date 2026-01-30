@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { accessRequestsApi } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui';
 import { getAccessRequestStatusBadgeClass } from '@/lib/helpers';
 import { formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
@@ -16,7 +17,7 @@ export default function AccessRequestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const fetchRequests = async () => {
+  const getRequests = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -32,10 +33,10 @@ export default function AccessRequestsPage() {
   };
 
   useEffect(() => {
-    fetchRequests();
+    getRequests();
   }, [filter]);
 
-  const handleStatusChange = async (id: string, status: 'approved' | 'rejected') => {
+  const getStatusChange = async (id: string, status: 'approved' | 'rejected') => {
     setUpdatingId(id);
     setError(null);
     try {
@@ -78,14 +79,15 @@ export default function AccessRequestsPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center text-gray-500">Loading...</div>
-          ) : requests.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No requests found</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+        <Card className="p-0 overflow-hidden">
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-12 text-center text-gray-500">Loading...</div>
+            ) : requests.length === 0 ? (
+              <div className="p-12 text-center text-gray-500">No requests found</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -136,14 +138,14 @@ export default function AccessRequestsPage() {
                         {req.status === 'pending' ? (
                           <span className="flex gap-2 justify-end">
                             <button
-                              onClick={() => handleStatusChange(req.id, 'approved')}
+                              onClick={() => getStatusChange(req.id, 'approved')}
                               disabled={updatingId === req.id}
                               className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
                             >
                               {updatingId === req.id ? '…' : 'Approve'}
                             </button>
                             <button
-                              onClick={() => handleStatusChange(req.id, 'rejected')}
+                              onClick={() => getStatusChange(req.id, 'rejected')}
                               disabled={updatingId === req.id}
                               className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
                             >
@@ -157,10 +159,11 @@ export default function AccessRequestsPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

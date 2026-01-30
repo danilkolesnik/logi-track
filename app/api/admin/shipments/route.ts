@@ -1,37 +1,32 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
+const VALID_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'];
+
+export async function GET() {
   try {
     const supabase = await createClient();
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const trackingNumber = searchParams.get('tracking_number');
+    const admin = createAdminClient();
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Admin client not configured' },
+        { status: 503 }
+      );
+    }
 
-    let query = supabase
+    const { data, error } = await admin
       .from('shipments')
       .select('*')
-      .eq('client_id', user.id)
       .order('created_at', { ascending: false });
-
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    if (trackingNumber) {
-      query = query.ilike('tracking_number', `%${trackingNumber}%`);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching shipments:', error);
@@ -41,9 +36,9 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json({ data });
-  } catch (error) {
-    console.error('Unexpected error:', error);
+    return NextResponse.json({ data: data ?? [] });
+  } catch (err) {
+    console.error('Unexpected error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -58,37 +53,59 @@ export async function POST(request: Request) {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const admin = createAdminClient();
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Admin client not configured' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const {
+      client_id,
       tracking_number,
       origin,
       destination,
-      estimated_delivery,
       status = 'pending',
+      estimated_delivery,
+      actual_delivery,
     } = body;
 
-    if (!tracking_number || !origin || !destination) {
+    if (!client_id || !tracking_number || !origin || !destination) {
       return NextResponse.json(
-        { error: 'Tracking number, origin, and destination are required' },
+        {
+          error:
+            'client_id, tracking_number, origin, and destination are required',
+        },
         { status: 400 }
       );
     }
 
-    const { data, error } = await supabase
+    if (!VALID_STATUSES.includes(status)) {
+      return NextResponse.json(
+        {
+          error: `status must be one of: ${VALID_STATUSES.join(', ')}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await admin
       .from('shipments')
       .insert([
         {
-          client_id: user.id,
-          tracking_number,
-          origin,
-          destination,
-          estimated_delivery: estimated_delivery || null,
+          client_id,
+          tracking_number: String(tracking_number).trim(),
+          origin: String(origin).trim(),
+          destination: String(destination).trim(),
           status,
+          estimated_delivery: estimated_delivery || null,
+          actual_delivery: actual_delivery || null,
         },
       ])
       .select()
@@ -97,14 +114,14 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Error creating shipment:', error);
       return NextResponse.json(
-        { error: 'Failed to create shipment' },
+        { error: error.message || 'Failed to create shipment' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
-    console.error('Unexpected error:', error);
+  } catch (err) {
+    console.error('Unexpected error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

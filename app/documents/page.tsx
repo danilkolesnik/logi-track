@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { documentsApi } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui';
 import { formatFileSize } from '@/lib/helpers';
 import { formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
@@ -20,7 +21,7 @@ export default function DocumentsPage() {
       const res = await documentsApi.getList();
       setDocuments(res.data ?? []);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load documents');
+      setError(err instanceof Error ? err.message : String(err));
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -47,14 +48,15 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center text-gray-500">Loading...</div>
-          ) : documents.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No documents found</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+        <Card className="p-0 overflow-hidden">
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-12 text-center text-gray-500">Loading...</div>
+            ) : documents.length === 0 ? (
+              <div className="p-12 text-center text-gray-500">No documents found</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -113,10 +115,11 @@ export default function DocumentsPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

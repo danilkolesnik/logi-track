@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAppDispatch } from '@/lib/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { setUser, clearUser } from '@/lib/store/slices/userSlice';
 import { supabase } from '@/lib/supabase/client';
 
@@ -22,36 +22,45 @@ export default function AuthProvider({
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.user.user);
+  const authCheckedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
 
-    const syncSession = async () => {
+    const syncUser = async () => {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { user: currentUser },
+        error,
+      } = await supabase.auth.getUser();
 
       if (!mounted) return;
 
-      if (session?.user) {
-        dispatch(setUser(session.user));
+      authCheckedRef.current = true;
+      if (!error && currentUser) {
+        dispatch(setUser(currentUser));
       } else {
         dispatch(clearUser());
         if (isProtectedPath(pathname)) {
           router.replace('/login');
-          return;
         }
       }
     };
 
-    syncSession();
+    syncUser();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
-      if (session?.user) {
-        dispatch(setUser(session.user));
+      if (session) {
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+        if (!mounted) return;
+        if (!error && currentUser) {
+          dispatch(setUser(currentUser));
+        } else {
+          dispatch(clearUser());
+        }
       } else {
         dispatch(clearUser());
       }
@@ -61,7 +70,14 @@ export default function AuthProvider({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [pathname, router, dispatch]);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!authCheckedRef.current) return;
+    if (isProtectedPath(pathname) && !user) {
+      router.replace('/login');
+    }
+  }, [pathname, user, router]);
 
   return <>{children}</>;
 }

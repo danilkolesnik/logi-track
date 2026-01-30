@@ -12,11 +12,11 @@ export async function PATCH(
     const { id } = await context.params;
     const supabase = await createClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const currentUser = session?.user;
+      data: { user: currentUser },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!currentUser) {
+    if (authError || !currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

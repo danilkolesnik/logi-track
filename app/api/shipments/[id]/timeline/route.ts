@@ -8,11 +8,11 @@ export async function GET(
   try {
     const supabase = await createClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const user = session?.user;
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -57,11 +57,11 @@ export async function POST(
   try {
     const supabase = await createClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const user = session?.user;
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

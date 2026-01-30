@@ -7,8 +7,8 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className = '' }: CardTitleProps) {
   return (
-    <h1 className={`text-3xl font-bold text-gray-900 mb-2 ${className}`}>
+    <h3 className={`text-lg font-semibold text-gray-900 ${className}`}>
       {children}
-    </h1>
+    </h3>
   );
 }

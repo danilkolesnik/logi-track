@@ -1,20 +1,37 @@
+'use client';
+
 import Link from 'next/link';
+import { useGetShipmentsQuery } from '@/lib/store/api/shipmentsApi';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
-import { mockShipments, getDashboardStats } from '@/lib/utils/mockData';
 import { formatDateUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
-import UserWelcome from '@/components/UserWelcome';
+import type { Shipment } from '@/types/api';
+
+function getDashboardStats(shipments: Shipment[]) {
+  const total = shipments.length;
+  const inTransit = shipments.filter((s) => s.status === 'in_transit').length;
+  const delivered = shipments.filter((s) => s.status === 'delivered').length;
+  const pending = shipments.filter((s) => s.status === 'pending').length;
+  return { total, inTransit, delivered, pending };
+}
 
 export default function DashboardPage() {
-  const stats = getDashboardStats();
-  const recentShipments = mockShipments.slice(0, 5);
+  const { data: shipments = [], isLoading: loading, isError, error } = useGetShipmentsQuery();
+
+  const stats = getDashboardStats(shipments);
+  const recentShipments = shipments.slice(0, 5);
+  const errorMessage = isError && error && 'message' in error ? String(error.message) : isError ? 'Failed to load shipments' : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Dashboard" />
-
       <main className="p-8 max-w-7xl mx-auto">
-        <UserWelcome />
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            {errorMessage}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
@@ -74,73 +91,79 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Shipments</h3>
+        <Card className="p-0 overflow-hidden">
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle>Recent Shipments</CardTitle>
             <Link
               href="/shipments"
               className="text-primary-600 hover:text-primary-700 text-sm font-medium transition-colors"
             >
               View All →
             </Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tracking Number
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Route
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estimated Delivery
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentShipments.map((shipment) => (
-                  <tr key={shipment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{shipment.tracking_number}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{shipment.origin}</div>
-                      <div className="text-xs text-gray-500">→ {shipment.destination}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
-                          shipment.status
-                        )}`}
-                      >
-                        {shipment.status.replace('_', ' ').toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDateUTC(shipment.estimated_delivery)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        href={`/shipments/${shipment.id}`}
-                        className="text-primary-600 hover:text-primary-700 transition-colors"
-                      >
-                        View Details
-                      </Link>
-                    </td>
+          </CardHeader>
+          <CardContent className="overflow-x-auto p-0">
+            {loading ? (
+              <div className="p-12 text-center text-gray-500">Loading…</div>
+            ) : recentShipments.length === 0 ? (
+              <div className="p-12 text-center text-gray-500">No shipments yet</div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tracking Number
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Route
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estimated Delivery
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {recentShipments.map((shipment) => (
+                    <tr key={shipment.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{shipment.tracking_number}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{shipment.origin}</div>
+                        <div className="text-xs text-gray-500">→ {shipment.destination}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
+                            shipment.status
+                          )}`}
+                        >
+                          {shipment.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDateUTC(shipment.estimated_delivery)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Link
+                          href={`/shipments/${shipment.id}`}
+                          className="text-primary-600 hover:text-primary-700 transition-colors"
+                        >
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
@@ -173,6 +196,23 @@ export default function DashboardPage() {
               </div>
               <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/shipments"
+            className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                  Import Shipments
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">Add shipments manually or import from CSV</p>
+              </div>
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
             </div>
           </Link>
