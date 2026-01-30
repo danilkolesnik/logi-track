@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { getMockShipmentById, getMockTimelineByShipmentId } from '@/lib/utils/mockData';
 import { formatDateUTC, formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
@@ -17,21 +18,6 @@ export default async function ShipmentDetailPage({ params }: ShipmentDetailPageP
   }
 
   const timeline = getMockTimelineByShipmentId(id);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'in_transit':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,7 +46,7 @@ export default async function ShipmentDetailPage({ params }: ShipmentDetailPageP
               <dt className="text-sm font-medium text-gray-500">Status</dt>
               <dd className="mt-1">
                 <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
                     shipment.status
                   )}`}
                 >

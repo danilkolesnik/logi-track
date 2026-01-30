@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    const admin = createAdminClient();
+    const supabase = admin ?? await createClient();
     const body = await request.json();
 
     const { email, company_name, message } = body;

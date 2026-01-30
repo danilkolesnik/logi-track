@@ -1,24 +1,10 @@
 import Link from 'next/link';
+import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { mockShipments } from '@/lib/utils/mockData';
 import { formatDateUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
 
 export default function ShipmentsPage() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'in_transit':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Shipments" backHref="/dashboard" backLabel="Dashboard" />
@@ -66,7 +52,7 @@ export default function ShipmentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
                           shipment.status
                         )}`}
                       >

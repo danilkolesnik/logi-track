@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { mockShipments, getDashboardStats } from '@/lib/utils/mockData';
 import { formatDateUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
@@ -7,21 +8,6 @@ import UserWelcome from '@/components/UserWelcome';
 export default function DashboardPage() {
   const stats = getDashboardStats();
   const recentShipments = mockShipments.slice(0, 5);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'in_transit':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -131,7 +117,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
                           shipment.status
                         )}`}
                       >
@@ -156,7 +142,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             href="/shipments"
             className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
@@ -170,6 +156,23 @@ export default function DashboardPage() {
               </div>
               <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/access-requests"
+            className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                  Access Requests
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">View and approve access requests</p>
+              </div>
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
           </Link>

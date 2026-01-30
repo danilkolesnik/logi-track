@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { accessRequestsApi } from '@/lib/api';
-import Header from '@/components/Header';
 
 export default function RequestAccessPage() {
   const [email, setEmail] = useState('');
@@ -28,7 +27,7 @@ export default function RequestAccessPage() {
       setSubmitted(true);
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      setError(err.message);
       setLoading(false);
     }
   };
@@ -36,7 +35,6 @@ export default function RequestAccessPage() {
   if (submitted) {
     return (
       <>
-        {/* <Header showPublicNav={false} /> */}
         <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
           <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center py-8">
@@ -59,7 +57,6 @@ export default function RequestAccessPage() {
 
   return (
     <>
-      <Header showPublicNav={false} />
       <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-lg">
           <div className="text-center mb-8">

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Header from '@/components/Header';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -41,7 +40,6 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* <Header showPublicNav={false} /> */}
       <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center mb-8">

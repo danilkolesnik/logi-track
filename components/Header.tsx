@@ -4,13 +4,9 @@ import Link from 'next/link';
 import { useAppSelector } from '@/lib/store/hooks';
 
 export interface HeaderProps {
-  /** For protected layout: page title */
   title?: string;
-  /** For protected layout: link back (e.g. to dashboard) */
   backHref?: string;
-  /** For protected layout: label for back link */
   backLabel?: string;
-  /** For public layout: show Sign In / Request Access in header */
   showPublicNav?: boolean;
 }
 

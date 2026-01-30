@@ -1,4 +1,3 @@
-// Временные типы для JSX до установки node_modules
 declare namespace React {
   type ReactNode = any;
 }

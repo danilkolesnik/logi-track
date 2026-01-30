@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
-import Header from '@/components/Header';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -38,7 +37,6 @@ export default function ForgotPasswordPage() {
   if (success) {
     return (
       <>
-        {/* <Header showPublicNav={false} /> */}
         <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center py-8">
@@ -61,7 +59,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <>
-      <Header showPublicNav={false} />
       <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center mb-8">
