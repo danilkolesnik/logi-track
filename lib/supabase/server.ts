@@ -8,11 +8,11 @@ export async function createClient() {
   const cookieStore = await cookies();
   return createServerClient(supabaseUrl!, supabaseKey!, {
     cookies: {
-      get: (name) => cookieStore.get(name)?.value ?? null,
-      set: (name, value, options) => {
+      get: (name: string) => cookieStore.get(name)?.value ?? null,
+      set: (name: string, value: string, options: Parameters<typeof cookieStore.set>[2]) => {
         cookieStore.set(name, value, options);
       },
-      remove: (name) => {
+      remove: (name: string) => {
         cookieStore.delete(name);
       },
     },
