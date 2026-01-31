@@ -20,7 +20,7 @@ const baseQuery = fetchBaseQuery({
 export const adminApi = createApi({
   reducerPath: 'adminApi',
   baseQuery,
-  tagTypes: ['AdminShipments', 'AdminUsers'],
+  tagTypes: ['AdminShipments', 'AdminUsers', 'Shipments'],
   endpoints: (builder) => ({
     getAdminUsers: builder.query<AdminUser[], void>({
       query: () => 'admin/users',
