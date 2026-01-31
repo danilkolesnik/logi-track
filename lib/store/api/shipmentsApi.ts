@@ -28,4 +28,4 @@ export const shipmentsApi = createApi({
   }),
 });
 
-export const { useGetShipmentsQuery } = shipmentsApi;
+export const { useGetShipmentsQuery, usePrefetch: usePrefetchShipments } = shipmentsApi;

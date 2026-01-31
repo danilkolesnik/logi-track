@@ -70,4 +70,5 @@ export const {
   useGetAdminShipmentsQuery,
   useCreateShipmentMutation,
   useImportShipmentsCsvMutation,
+  usePrefetch: usePrefetchAdmin,
 } = adminApi;

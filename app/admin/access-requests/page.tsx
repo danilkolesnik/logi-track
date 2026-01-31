@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { accessRequestsApi } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui';
 import { getAccessRequestStatusBadgeClass } from '@/lib/helpers';
@@ -17,7 +17,7 @@ export default function AccessRequestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const getRequests = async () => {
+  const getRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -30,11 +30,11 @@ export default function AccessRequestsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     getRequests();
-  }, [filter]);
+  }, [getRequests]);
 
   const getStatusChange = async (id: string, status: 'approved' | 'rejected') => {
     setUpdatingId(id);

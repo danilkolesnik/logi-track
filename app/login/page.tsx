@@ -103,7 +103,7 @@ export default function LoginPage() {
             Forgot password?
           </Link>
           <div className="text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/request-access" className="text-primary-600 font-semibold hover:text-primary-700 hover:underline transition-colors">
               Request Access
             </Link>

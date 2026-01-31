@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useGetShipmentsQuery } from '@/lib/store/api/shipmentsApi';
+import { useGetShipmentsQuery, usePrefetchShipments } from '@/lib/store/api/shipmentsApi';
+import { usePrefetchAdmin } from '@/lib/store/api/adminApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { formatDateUTC } from '@/lib/utils/date';
@@ -18,6 +19,9 @@ function getDashboardStats(shipments: Shipment[]) {
 
 export default function DashboardPage() {
   const { data: shipments = [], isLoading: loading, isError, error } = useGetShipmentsQuery();
+  const prefetchShipments = usePrefetchShipments('getShipments');
+  const prefetchAdminUsers = usePrefetchAdmin('getAdminUsers');
+  const prefetchAdminShipments = usePrefetchAdmin('getAdminShipments');
 
   const stats = getDashboardStats(shipments);
   const recentShipments = shipments.slice(0, 5);
@@ -97,6 +101,7 @@ export default function DashboardPage() {
             <Link
               href="/shipments"
               className="text-primary-600 hover:text-primary-700 text-sm font-medium transition-colors"
+              onMouseEnter={() => prefetchShipments()}
             >
               View All →
             </Link>
@@ -169,6 +174,7 @@ export default function DashboardPage() {
           <Link
             href="/shipments"
             className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
+            onMouseEnter={() => prefetchShipments()}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -203,6 +209,10 @@ export default function DashboardPage() {
           <Link
             href="/admin/shipments"
             className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
+            onMouseEnter={() => {
+              prefetchAdminUsers();
+              prefetchAdminShipments();
+            }}
           >
             <div className="flex items-center justify-between">
               <div>

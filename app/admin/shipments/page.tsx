@@ -53,7 +53,6 @@ export default function AdminShipmentsPage() {
   const [createShipment, { isLoading: formSubmitting }] = useCreateShipmentMutation();
   const [importShipmentsCsv, { isLoading: importSubmitting }] = useImportShipmentsCsvMutation();
 
-  const loading = usersLoading || shipmentsLoading;
   const displayError = error ?? (shipmentsError ? getErrorMessage(shipmentsErrorData) : null);
 
   const clearForm = () => {
@@ -130,16 +129,6 @@ export default function AdminShipmentsPage() {
       <Header title="Admin: Shipments" backHref="/dashboard" backLabel="Dashboard" />
 
       <main className="p-8 max-w-6xl mx-auto">
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[320px]">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-              <p className="text-sm text-gray-500">Loading…</p>
-            </div>
-          </div>
-        ) : (
-          <>
-
         {displayError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
             {displayError}
@@ -169,11 +158,15 @@ export default function AdminShipmentsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="">Select client</option>
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.email}
-                      </option>
-                    ))}
+                    {usersLoading ? (
+                      <option value="" disabled>Loading…</option>
+                    ) : (
+                      users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.email}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -298,11 +291,15 @@ export default function AdminShipmentsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Select client</option>
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.email}
-                      </option>
-                    ))}
+                    {usersLoading ? (
+                      <option value="" disabled>Loading…</option>
+                    ) : (
+                      users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.email}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
                 <div>
@@ -332,7 +329,12 @@ export default function AdminShipmentsPage() {
               <CardTitle>All shipments</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {shipments.length === 0 ? (
+              {shipmentsLoading ? (
+                <div className="p-8 flex items-center justify-center gap-2 text-gray-500">
+                  <div className="w-5 h-5 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+                  Loading…
+                </div>
+              ) : shipments.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No shipments yet</div>
               ) : (
                 <div className="overflow-x-auto">
@@ -401,8 +403,6 @@ export default function AdminShipmentsPage() {
             </CardContent>
           </Card>
         </div>
-          </>
-        )}
       </main>
     </div>
   );
