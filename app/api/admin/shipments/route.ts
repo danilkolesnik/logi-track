@@ -107,7 +107,7 @@ export async function POST(request: Request) {
           estimated_delivery: estimated_delivery || null,
           actual_delivery: actual_delivery || null,
         },
-      ])
+      ] as never)
       .select()
       .single();
 
