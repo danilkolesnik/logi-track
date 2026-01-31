@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -19,7 +20,7 @@ export async function DELETE(
     const { data: document } = await supabase
       .from('documents')
       .select('*, shipments!inner(client_id)')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (!document || document.shipments.client_id !== user.id) {
@@ -36,7 +37,7 @@ export async function DELETE(
       console.error('Error deleting file from storage:', deleteError);
     }
 
-    const { error } = await supabase.from('documents').delete().eq('id', params.id);
+    const { error } = await supabase.from('documents').delete().eq('id', id);
 
     if (error) {
       console.error('Error deleting document:', error);
