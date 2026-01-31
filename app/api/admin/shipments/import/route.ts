@@ -169,7 +169,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await admin
       .from('shipments')
-      .insert(toInsert)
+      .insert(toInsert as unknown as never[])
       .select('id');
 
     if (error) {
