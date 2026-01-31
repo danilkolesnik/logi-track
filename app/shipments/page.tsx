@@ -1,18 +1,37 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { shipmentsApi } from '@/lib/api';
-import { Card, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { formatDateUTC } from '@/lib/utils/date';
-import Header from '@/components/Header';
+import { sortShipments, type ShipmentSortKey, type SortOrder } from '@/lib/utils/shipments-sort';
 import type { Shipment } from '@/types/api';
+import { Card, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
+import Header from '@/components/Header';
 
 export default function ShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ by: ShipmentSortKey | null; order: SortOrder }>({
+    by: null,
+    order: 'desc',
+  });
+
+  const sortByColumn = (key: ShipmentSortKey) => {
+    setSort((prev) => {
+      if (prev.by === key) {
+        return { by: key, order: prev.order === 'asc' ? 'desc' : 'asc' };
+      }
+      return { by: key, order: 'desc' };
+    });
+  };
+
+  const sortedShipments = useMemo(
+    () => (sort.by ? sortShipments(shipments, sort.by, sort.order) : shipments),
+    [shipments, sort.by, sort.order]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -65,16 +84,41 @@ export default function ShipmentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tracking Number</TableHead>
-                    <TableHead>Route</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Estimated Delivery</TableHead>
-                    <TableHead>Actual Delivery</TableHead>
+                    <TableHead
+                      onSortClick={() => sortByColumn('tracking_number')}
+                      sortOrder={sort.by === 'tracking_number' ? sort.order : null}
+                    >
+                      Tracking Number
+                    </TableHead>
+                    <TableHead
+                      onSortClick={() => sortByColumn('origin')}
+                      sortOrder={sort.by === 'origin' ? sort.order : null}
+                    >
+                      Route
+                    </TableHead>
+                    <TableHead
+                      onSortClick={() => sortByColumn('status')}
+                      sortOrder={sort.by === 'status' ? sort.order : null}
+                    >
+                      Status
+                    </TableHead>
+                    <TableHead
+                      onSortClick={() => sortByColumn('estimated_delivery')}
+                      sortOrder={sort.by === 'estimated_delivery' ? sort.order : null}
+                    >
+                      Estimated Delivery
+                    </TableHead>
+                    <TableHead
+                      onSortClick={() => sortByColumn('actual_delivery')}
+                      sortOrder={sort.by === 'actual_delivery' ? sort.order : null}
+                    >
+                      Actual Delivery
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {shipments.map((shipment) => (
+                  {sortedShipments.map((shipment) => (
                     <TableRow key={shipment.id}>
                       <TableCell>
                         <div className="text-sm font-medium text-gray-900">{shipment.tracking_number}</div>

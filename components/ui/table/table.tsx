@@ -28,13 +28,35 @@ const TableRow = forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableR
 );
 TableRow.displayName = 'TableRow';
 
-const TableHead = forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
-  ({ className = '', ...props }, ref) => (
+export type TableHeadSortOrder = 'asc' | 'desc' | null;
+
+export interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  onSortClick?: () => void;
+  sortOrder?: TableHeadSortOrder;
+}
+
+const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
+  ({ className = '', onSortClick, sortOrder = null, children, ...props }, ref) => (
     <th
       ref={ref}
       className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`.trim()}
       {...props}
-    />
+    >
+      {onSortClick ? (
+        <button
+          type="button"
+          onClick={onSortClick}
+          className="inline-flex items-center gap-1 font-medium hover:text-gray-700"
+        >
+          {children}
+          <span className={sortOrder !== null ? 'text-primary-600' : 'text-gray-300'}>
+            {sortOrder === 'desc' ? '↓' : '↑'}
+          </span>
+        </button>
+      ) : (
+        children
+      )}
+    </th>
   )
 );
 TableHead.displayName = 'TableHead';

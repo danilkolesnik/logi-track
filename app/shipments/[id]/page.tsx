@@ -14,6 +14,16 @@ interface ShipmentDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
+const TIMELINE_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'] as const;
+const SHIPMENT_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'] as const;
+
+function loadShipmentAndTimeline(shipmentId: string) {
+  return Promise.all([
+    shipmentsApi.getById(shipmentId),
+    shipmentsApi.getTimeline(shipmentId),
+  ]);
+}
+
 export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) {
   const [id, setId] = useState<string | null>(null);
   const [shipment, setShipment] = useState<Shipment | null>(null);
@@ -21,9 +31,29 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [timelineStatus, setTimelineStatus] = useState<string>('in_transit');
+  const [timelineNotes, setTimelineNotes] = useState('');
+  const [timelineLocation, setTimelineLocation] = useState('');
+  const [timelineSubmitting, setTimelineSubmitting] = useState(false);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editStatus, setEditStatus] = useState<string>('pending');
+  const [editOrigin, setEditOrigin] = useState('');
+  const [editDestination, setEditDestination] = useState('');
+  const [editEstimatedDelivery, setEditEstimatedDelivery] = useState('');
+  const [editActualDelivery, setEditActualDelivery] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
-    params.then((p) => setId(p.id));
+    params.then((p) => {
+      if (!cancelled) setId(p.id);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [params]);
 
   useEffect(() => {
@@ -31,7 +61,7 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Promise.all([shipmentsApi.getById(id), shipmentsApi.getTimeline(id)])
+    loadShipmentAndTimeline(id)
       .then(([shipRes, timelineRes]) => {
         if (cancelled) return;
         const ship = shipRes.data;
@@ -58,6 +88,80 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
       cancelled = true;
     };
   }, [id]);
+
+  const getTimeline = () => {
+    if (!id) return;
+    loadShipmentAndTimeline(id).then(([, timelineRes]) => {
+      setTimeline(timelineRes.data ?? []);
+    });
+  };
+
+  const startEdit = () => {
+    if (!shipment) return;
+    setEditStatus(shipment.status);
+    setEditOrigin(shipment.origin);
+    setEditDestination(shipment.destination);
+    setEditEstimatedDelivery(shipment.estimated_delivery ?? '');
+    setEditActualDelivery(shipment.actual_delivery ?? '');
+    setEditError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditError(null);
+  };
+
+  const submitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    setEditError(null);
+    setEditSubmitting(true);
+    try {
+      const res = await shipmentsApi.update(id, {
+        status: editStatus as Shipment['status'],
+        origin: editOrigin.trim(),
+        destination: editDestination.trim(),
+        estimated_delivery: editEstimatedDelivery.trim() || null,
+        actual_delivery: editActualDelivery.trim() || null,
+      });
+      if (res.error) {
+        setEditError(res.error);
+        return;
+      }
+      if (res.data) setShipment(res.data);
+      setIsEditing(false);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to update shipment');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const addTimelineEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    setTimelineError(null);
+    setTimelineSubmitting(true);
+    try {
+      const res = await shipmentsApi.createTimelineEntry(id, {
+        status: timelineStatus,
+        notes: timelineNotes.trim() || null,
+        location: timelineLocation.trim() || null,
+      });
+      if (res.error) {
+        setTimelineError(res.error);
+        return;
+      }
+      setTimelineNotes('');
+      setTimelineLocation('');
+      getTimeline();
+    } catch (err) {
+      setTimelineError(err instanceof Error ? err.message : 'Failed to add event');
+    } finally {
+      setTimelineSubmitting(false);
+    }
+  };
 
   if (id !== null && !loading) {
     if (error || !shipment) {
@@ -128,11 +232,114 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
         </div>
 
         <Card className="p-6 mb-8">
-          <CardHeader className="border-b-0 pb-0">
+          <CardHeader className="border-b-0 pb-0 flex flex-row items-center justify-between gap-4">
             <CardTitle>Details</CardTitle>
+            {!isEditing && (
+              <button
+                type="button"
+                onClick={startEdit}
+                className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 border border-primary-600 rounded hover:bg-primary-50"
+              >
+                Edit
+              </button>
+            )}
           </CardHeader>
           <CardContent className="pt-4">
-            <DetailsList items={DetailsItems} />
+            {isEditing ? (
+              <form onSubmit={submitEdit} className="space-y-4">
+                {editError && (
+                  <p className="text-sm text-red-600">{editError}</p>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="edit-status" className="text-xs font-medium text-gray-600">
+                      Status
+                    </label>
+                    <select
+                      id="edit-status"
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value)}
+                      className="rounded border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      {SHIPMENT_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label htmlFor="edit-origin" className="text-xs font-medium text-gray-600">
+                      Origin
+                    </label>
+                    <input
+                      id="edit-origin"
+                      type="text"
+                      value={editOrigin}
+                      onChange={(e) => setEditOrigin(e.target.value)}
+                      required
+                      className="rounded border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label htmlFor="edit-destination" className="text-xs font-medium text-gray-600">
+                      Destination
+                    </label>
+                    <input
+                      id="edit-destination"
+                      type="text"
+                      value={editDestination}
+                      onChange={(e) => setEditDestination(e.target.value)}
+                      required
+                      className="rounded border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="edit-estimated" className="text-xs font-medium text-gray-600">
+                      Estimated Delivery
+                    </label>
+                    <input
+                      id="edit-estimated"
+                      type="date"
+                      value={editEstimatedDelivery}
+                      onChange={(e) => setEditEstimatedDelivery(e.target.value)}
+                      className="rounded border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="edit-actual" className="text-xs font-medium text-gray-600">
+                      Actual Delivery
+                    </label>
+                    <input
+                      id="edit-actual"
+                      type="date"
+                      value={editActualDelivery}
+                      onChange={(e) => setEditActualDelivery(e.target.value)}
+                      className="rounded border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={editSubmitting}
+                    className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    {editSubmitting ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    disabled={editSubmitting}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <DetailsList items={DetailsItems} />
+            )}
           </CardContent>
         </Card>
 
@@ -140,7 +347,62 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
           <CardHeader className="border-b-0 pb-0">
             <CardTitle>Timeline</CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
+          <CardContent className="pt-4 space-y-6">
+            <form onSubmit={addTimelineEvent} className="flex flex-wrap gap-3 items-end p-4 bg-gray-50 rounded-lg">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="timeline-status" className="text-xs font-medium text-gray-600">
+                  Status
+                </label>
+                <select
+                  id="timeline-status"
+                  value={timelineStatus}
+                  onChange={(e) => setTimelineStatus(e.target.value)}
+                  className="rounded border border-gray-300 px-3 py-2 text-sm min-w-[140px]"
+                >
+                  {TIMELINE_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="timeline-location" className="text-xs font-medium text-gray-600">
+                  Location
+                </label>
+                <input
+                  id="timeline-location"
+                  type="text"
+                  value={timelineLocation}
+                  onChange={(e) => setTimelineLocation(e.target.value)}
+                  placeholder="Optional"
+                  className="rounded border border-gray-300 px-3 py-2 text-sm min-w-[160px]"
+                />
+              </div>
+              <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+                <label htmlFor="timeline-notes" className="text-xs font-medium text-gray-600">
+                  Notes
+                </label>
+                <input
+                  id="timeline-notes"
+                  type="text"
+                  value={timelineNotes}
+                  onChange={(e) => setTimelineNotes(e.target.value)}
+                  placeholder="Optional"
+                  className="rounded border border-gray-300 px-3 py-2 text-sm w-full"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={timelineSubmitting}
+                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 disabled:opacity-50"
+              >
+                {timelineSubmitting ? 'Adding…' : 'Add event'}
+              </button>
+            </form>
+            {timelineError && (
+              <p className="text-sm text-red-600">{timelineError}</p>
+            )}
             {timeline.length === 0 ? (
               <p className="text-sm text-gray-500">No timeline events yet.</p>
             ) : (
