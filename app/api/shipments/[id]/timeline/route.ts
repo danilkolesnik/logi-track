@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -19,7 +20,7 @@ export async function GET(
     const { data: shipment } = await supabase
       .from('shipments')
       .select('client_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (!shipment || shipment.client_id !== user.id) {
@@ -29,7 +30,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('shipment_timeline')
       .select('*')
-      .eq('shipment_id', params.id)
+      .eq('shipment_id', id)
       .order('timestamp', { ascending: true });
 
     if (error) {
@@ -52,9 +53,10 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -79,7 +81,7 @@ export async function POST(
       .from('shipment_timeline')
       .insert([
         {
-          shipment_id: params.id,
+          shipment_id: id,
           status,
           notes: notes || null,
           location: location || null,

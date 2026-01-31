@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -19,7 +20,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('shipments')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('client_id', user.id)
       .single();
 
@@ -46,9 +47,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -64,7 +66,7 @@ export async function PATCH(
     const { data: shipment } = await supabase
       .from('shipments')
       .select('client_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (!shipment || shipment.client_id !== user.id) {
@@ -74,7 +76,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('shipments')
       .update({ ...body, updated_at: new Date().toISOString() })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
