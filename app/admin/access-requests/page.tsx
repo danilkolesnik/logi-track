@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { accessRequestsApi } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui';
 import { getAccessRequestStatusBadgeClass } from '@/lib/helpers';
@@ -11,6 +13,8 @@ import type { AccessRequest } from '@/types/api';
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
 export default function AccessRequestsPage() {
+  const router = useRouter();
+  const isAdmin = useIsAdmin();
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [filter, setFilter] = useState<StatusFilter>('pending');
   const [loading, setLoading] = useState(true);
@@ -33,8 +37,12 @@ export default function AccessRequestsPage() {
   }, [filter]);
 
   useEffect(() => {
+    if (!isAdmin) {
+      router.replace('/dashboard');
+      return;
+    }
     getRequests();
-  }, [getRequests]);
+  }, [getRequests, isAdmin, router]);
 
   const getStatusChange = async (id: string, status: 'approved' | 'rejected') => {
     setUpdatingId(id);
@@ -48,6 +56,8 @@ export default function AccessRequestsPage() {
       setUpdatingId(null);
     }
   };
+
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">

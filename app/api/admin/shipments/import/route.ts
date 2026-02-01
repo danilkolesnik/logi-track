@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isAdmin } from '@/lib/auth/roles';
 import { NextResponse } from 'next/server';
 
 const VALID_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'];
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isAdmin(user)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const admin = createAdminClient();

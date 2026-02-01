@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { setUser, clearUser } from '@/lib/store/slices/userSlice';
 import { supabase } from '@/lib/supabase/client';
+import { isAdmin } from './roles';
 
 const PUBLIC_PATHS = ['/', '/login', '/request-access', '/forgot-password', '/reset-password'];
 
@@ -12,6 +13,10 @@ function isProtectedPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return false;
   if (pathname.startsWith('/api') || pathname.startsWith('/auth')) return false;
   return true;
+}
+
+function isAdminPath(pathname: string): boolean {
+  return pathname.startsWith('/admin');
 }
 
 export default function AuthProvider({
@@ -76,6 +81,10 @@ export default function AuthProvider({
     if (!authCheckedRef.current) return;
     if (isProtectedPath(pathname) && !user) {
       router.replace('/login');
+      return;
+    }
+    if (isAdminPath(pathname) && user && !isAdmin(user)) {
+      router.replace('/dashboard');
     }
   }, [pathname, user, router]);
 

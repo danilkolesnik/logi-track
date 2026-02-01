@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isAdmin } from '@/lib/auth/roles';
 import { sendEmail } from '@/lib/email';
 import { generatePassword } from '@/lib/helpers';
 import { NextResponse } from 'next/server';
@@ -18,6 +19,9 @@ export async function PATCH(
 
     if (authError || !currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isAdmin(currentUser)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();

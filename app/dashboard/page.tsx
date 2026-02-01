@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useGetShipmentsQuery, usePrefetchShipments } from '@/lib/store/api/shipmentsApi';
 import { usePrefetchAdmin } from '@/lib/store/api/adminApi';
+import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { formatDateUTC } from '@/lib/utils/date';
@@ -18,6 +19,7 @@ function getDashboardStats(shipments: Shipment[]) {
 }
 
 export default function DashboardPage() {
+  const isAdmin = useIsAdmin();
   const { data: shipments = [], isLoading: loading, isError, error } = useGetShipmentsQuery();
   const prefetchShipments = usePrefetchShipments('getShipments');
   const prefetchAdminUsers = usePrefetchAdmin('getAdminUsers');
@@ -189,43 +191,47 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          <Link
-            href="/admin/access-requests"
-            className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                  Access Requests
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">View and approve access requests</p>
-              </div>
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-            </div>
-          </Link>
+          {isAdmin && (
+            <>
+              <Link
+                href="/admin/access-requests"
+                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                      Access Requests
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">View and approve access requests</p>
+                  </div>
+                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                </div>
+              </Link>
 
-          <Link
-            href="/admin/shipments"
-            className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-            onMouseEnter={() => {
-              prefetchAdminUsers();
-              prefetchAdminShipments();
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                  Import Shipments
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">Add shipments manually or import from CSV</p>
-              </div>
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-            </div>
-          </Link>
+              <Link
+                href="/admin/shipments"
+                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
+                onMouseEnter={() => {
+                  prefetchAdminUsers();
+                  prefetchAdminShipments();
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                      Import Shipments
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Add shipments manually or import from CSV</p>
+                  </div>
+                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </div>
+              </Link>
+            </>
+          )}
 
           <Link
             href="/documents"

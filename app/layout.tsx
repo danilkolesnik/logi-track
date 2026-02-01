@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 import StoreProvider from "@/lib/store/provider";
 import AuthProvider from "@/lib/auth/AuthProvider";
+import { ToastContainer } from 'react-toastify';
 
 export const metadata: Metadata = {
   title: "Logi Track",
@@ -22,6 +24,9 @@ export default function RootLayout({
               {children}
             </AuthProvider>
           </StoreProvider>
+          <ToastContainer 
+            position="bottom-right"
+          />
         </div>
       </body>
     </html>

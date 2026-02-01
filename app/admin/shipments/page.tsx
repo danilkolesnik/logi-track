@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
+import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import {
   useGetAdminUsersQuery,
   useGetAdminShipmentsQuery,
@@ -34,9 +37,8 @@ function getErrorMessage(err: unknown): string {
 }
 
 export default function AdminShipmentsPage() {
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
+  const router = useRouter();
+  const isAdmin = useIsAdmin();
   const [formClientId, setFormClientId] = useState('');
   const [formTracking, setFormTracking] = useState('');
   const [formOrigin, setFormOrigin] = useState('');
@@ -53,7 +55,13 @@ export default function AdminShipmentsPage() {
   const [createShipment, { isLoading: formSubmitting }] = useCreateShipmentMutation();
   const [importShipmentsCsv, { isLoading: importSubmitting }] = useImportShipmentsCsvMutation();
 
-  const displayError = error ?? (shipmentsError ? getErrorMessage(shipmentsErrorData) : null);
+  useEffect(() => {
+    if (!isAdmin) {
+      router.replace('/dashboard');
+      return;
+    }
+    if (shipmentsError) toast.error(getErrorMessage(shipmentsErrorData), { toastId: 'shipments-load-error' });
+  }, [shipmentsError, shipmentsErrorData, isAdmin, router]);
 
   const clearForm = () => {
     setFormTracking('');
@@ -66,10 +74,8 @@ export default function AdminShipmentsPage() {
 
   const addShipment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
     if (!formClientId) {
-      setError('Select a client');
+      toast.error('Select a client');
       return;
     }
     try {
@@ -82,32 +88,30 @@ export default function AdminShipmentsPage() {
         estimated_delivery: formEstDelivery || null,
         actual_delivery: formActualDelivery || null,
       }).unwrap();
-      setSuccess('Shipment added.');
+      toast.success('Shipment added.');
       clearForm();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
   const importCsv = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
     if (!importClientId) {
-      setError('Select a client for import');
+      toast.error('Select a client for import');
       return;
     }
     if (!importFile || importFile.size === 0) {
-      setError('Select a CSV file');
+      toast.error('Select a CSV file');
       return;
     }
     try {
       const res = await importShipmentsCsv({ client_id: importClientId, file: importFile }).unwrap();
       const count = res.data?.imported ?? 0;
-      setSuccess(`Imported ${count} shipment(s).`);
+      toast.success(`Imported ${count} shipment(s).`);
       setImportFile(null);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -121,6 +125,8 @@ export default function AdminShipmentsPage() {
     URL.revokeObjectURL(url);
   };
 
+  if (!isAdmin) return null;
+
   const getClientEmail = (clientId: string) =>
     users.find((u) => u.id === clientId)?.email ?? clientId.slice(0, 8) + '…';
 
@@ -129,17 +135,6 @@ export default function AdminShipmentsPage() {
       <Header title="Admin: Shipments" backHref="/dashboard" backLabel="Dashboard" />
 
       <main className="p-8 max-w-6xl mx-auto">
-        {displayError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {displayError}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-            {success}
-          </div>
-        )}
-
         <div className="grid gap-8">
           <Card>
             <CardHeader>

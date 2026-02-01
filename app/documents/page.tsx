@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-toastify';
 import { documentsApi, shipmentsApi } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui';
 import { formatFileSize } from '@/lib/helpers';
@@ -14,22 +15,18 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [uploadShipmentId, setUploadShipmentId] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getDocuments = async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await documentsApi.getList();
       setDocuments(res.data ?? []);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : 'Failed to load documents');
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -48,7 +45,10 @@ export default function DocumentsPage() {
         if (!cancelled) setShipments(res.data ?? []);
       })
       .catch(() => {
-        if (!cancelled) setShipments([]);
+        if (!cancelled) {
+          toast.error('Failed to load shipments');
+          setShipments([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -58,23 +58,23 @@ export default function DocumentsPage() {
   const submitUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadShipmentId.trim() || !uploadFile) {
-      setUploadError('Choose a shipment and a file');
+      toast.error('Choose a shipment and a file');
       return;
     }
-    setUploadError(null);
     setUploading(true);
     try {
       const res = await documentsApi.upload(uploadShipmentId, uploadFile);
       if (res.error) {
-        setUploadError(res.error);
+        toast.error(res.error);
         return;
       }
+      toast.success('Document uploaded successfully');
       setUploadShipmentId('');
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       getDocuments();
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -89,12 +89,6 @@ export default function DocumentsPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Documents</h2>
           <p className="text-gray-600">View and download your documents</p>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
-          </div>
-        )}
 
         <Card className="p-6 mb-6">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Upload document</h3>
@@ -139,9 +133,6 @@ export default function DocumentsPage() {
               {uploading ? 'Uploading…' : 'Upload'}
             </button>
           </form>
-          {uploadError && (
-            <p className="mt-3 text-sm text-red-600">{uploadError}</p>
-          )}
         </Card>
 
         <Card className="p-0 overflow-hidden">

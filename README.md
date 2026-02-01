@@ -84,10 +84,18 @@ middleware.ts         # Middleware for route protection
 - 🔄 Shipments list - in development
 - 🔄 Documents section - in development
 
+## Roles
+
+- **Client** (`user`): Can view their shipments, documents, upload files. Default for approved access requests.
+- **Admin** (`admin`): Can approve/reject access requests, add shipments, import CSV.
+
+To create the first admin:
+1. Supabase Dashboard → Authentication → Users
+2. Select a user → Edit
+3. Under Raw User Meta / app_metadata add: `"role": "admin"`
+
+Or run SQL: `update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}'::jsonb where email = 'your-admin@example.com';`
+
 ## Next Steps
 
-1. Set up Supabase database (tables: users, shipments, documents)
-2. Implement "Request Access" backend logic
-3. Create shipments dashboard
-4. Create documents section
-5. Integrate with TMS API or manual data upload
+1. Integrate with TMS API or manual data upload
