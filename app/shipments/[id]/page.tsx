@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { shipmentsApi } from '@/lib/api';
+import { toast } from 'react-toastify';
+import { shipmentsApi, documentsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent, DetailsList } from '@/components/ui';
-import { getShipmentStatusBadgeClass } from '@/lib/helpers';
+import { getShipmentStatusBadgeClass, formatFileSize } from '@/lib/helpers';
 import { formatDateUTC, formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
-import type { Shipment, ShipmentTimeline } from '@/types/api';
+import { SHIPMENT_STATUSES, TIMELINE_STATUSES } from '@/lib/constants/shipment-statuses';
+import type { Shipment, ShipmentTimeline, Document } from '@/types/api';
 
 interface ShipmentDetailPageProps {
   params: Promise<{ id: string }>;
 }
-
-const TIMELINE_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'] as const;
-const SHIPMENT_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'] as const;
 
 function loadShipmentAndTimeline(shipmentId: string) {
   return Promise.all([
@@ -28,6 +27,7 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
   const [id, setId] = useState<string | null>(null);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [timeline, setTimeline] = useState<ShipmentTimeline[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,44 +56,27 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
     };
   }, [params]);
 
-  useEffect(() => {
+  const getDocuments = useCallback(async () => {
     if (!id) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    loadShipmentAndTimeline(id)
-      .then(([shipRes, timelineRes]) => {
-        if (cancelled) return;
-        const ship = shipRes.data;
-        const tl = timelineRes.data ?? [];
-        if (!ship) {
-          setShipment(null);
-          setTimeline([]);
-        } else {
-          setShipment(ship);
-          setTimeline(tl);
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load shipment');
-          setShipment(null);
-          setTimeline([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const res = await documentsApi.getList();
+      const allDocs = res.data ?? [];
+      setDocuments(allDocs.filter((doc) => doc.shipment_id === id));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load documents');
+      setDocuments([]);
+    }
   }, [id]);
 
-  const getTimeline = () => {
+  const refreshTimeline = async () => {
     if (!id) return;
-    loadShipmentAndTimeline(id).then(([, timelineRes]) => {
+    try {
+      const [, timelineRes] = await loadShipmentAndTimeline(id);
       setTimeline(timelineRes.data ?? []);
-    });
+      await getDocuments();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to refresh');
+    }
   };
 
   const startEdit = () => {
@@ -155,7 +138,7 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
       }
       setTimelineNotes('');
       setTimelineLocation('');
-      getTimeline();
+      refreshTimeline();
     } catch (err) {
       setTimelineError(err instanceof Error ? err.message : 'Failed to add event');
     } finally {
@@ -168,6 +151,44 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
       notFound();
     }
   }
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    loadShipmentAndTimeline(id)
+      .then(([shipRes, timelineRes]) => {
+        if (cancelled) return;
+        const ship = shipRes.data;
+        const tl = timelineRes.data ?? [];
+        if (!ship) {
+          setShipment(null);
+          setTimeline([]);
+        } else {
+          setShipment(ship);
+          setTimeline(tl);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load shipment');
+          setShipment(null);
+          setTimeline([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || !shipment) return;
+    getDocuments();
+  }, [id, shipment, getDocuments]);
 
   if (loading || !shipment) {
     return (
@@ -339,6 +360,44 @@ export default function ShipmentDetailPage({ params }: ShipmentDetailPageProps) 
               </form>
             ) : (
               <DetailsList items={DetailsItems} />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="p-6 mb-8">
+          <CardHeader className="border-b-0 pb-0 flex flex-row items-center justify-between">
+            <CardTitle>Documents</CardTitle>
+            <Link
+              href="/documents"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >
+              All documents →
+            </Link>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {documents.length === 0 ? (
+              <p className="text-sm text-gray-500">No documents for this shipment.</p>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {documents.map((doc) => (
+                  <li key={doc.id} className="py-3 flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{doc.file_name}</p>
+                      <p className="text-xs text-gray-500">
+                        {doc.file_type} · {formatFileSize(doc.file_size)} · {formatDateTimeUTC(doc.uploaded_at)}
+                      </p>
+                    </div>
+                    <a
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-primary-600 hover:text-primary-700 whitespace-nowrap"
+                    >
+                      Download
+                    </a>
+                  </li>
+                ))}
+              </ul>
             )}
           </CardContent>
         </Card>
