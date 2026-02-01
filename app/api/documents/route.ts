@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -83,7 +84,15 @@ export async function POST(request: Request) {
     const fileName = `${shipmentId}/${Date.now()}.${fileExt}`;
     const filePath = `shipments/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const adminClient = createAdminClient();
+    if (!adminClient) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    const { error: uploadError } = await adminClient.storage
       .from('documents')
       .upload(filePath, file);
 
@@ -97,7 +106,7 @@ export async function POST(request: Request) {
 
     const {
       data: { publicUrl },
-    } = supabase.storage.from('documents').getPublicUrl(filePath);
+    } = adminClient.storage.from('documents').getPublicUrl(filePath);
 
     const { data, error } = await supabase
       .from('documents')

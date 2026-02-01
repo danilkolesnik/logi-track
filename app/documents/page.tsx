@@ -1,18 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { documentsApi } from '@/lib/api';
+import { documentsApi, shipmentsApi } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui';
 import { formatFileSize } from '@/lib/helpers';
 import { formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
 import type { Document } from '@/types/api';
+import type { Shipment } from '@/types/api';
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [uploadShipmentId, setUploadShipmentId] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getDocuments = async () => {
     setLoading(true);
@@ -32,6 +40,46 @@ export default function DocumentsPage() {
     getDocuments();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    shipmentsApi
+      .getList()
+      .then((res) => {
+        if (!cancelled) setShipments(res.data ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setShipments([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const submitUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadShipmentId.trim() || !uploadFile) {
+      setUploadError('Choose a shipment and a file');
+      return;
+    }
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const res = await documentsApi.upload(uploadShipmentId, uploadFile);
+      if (res.error) {
+        setUploadError(res.error);
+        return;
+      }
+      setUploadShipmentId('');
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      getDocuments();
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Documents" backHref="/dashboard" backLabel="Dashboard" />
@@ -47,6 +95,54 @@ export default function DocumentsPage() {
             {error}
           </div>
         )}
+
+        <Card className="p-6 mb-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Upload document</h3>
+          <form onSubmit={submitUpload} className="flex flex-wrap gap-4 items-end">
+            <div className="flex flex-col gap-1 min-w-[200px]">
+              <label htmlFor="upload-shipment" className="text-xs font-medium text-gray-600">
+                Shipment
+              </label>
+              <select
+                id="upload-shipment"
+                value={uploadShipmentId}
+                onChange={(e) => setUploadShipmentId(e.target.value)}
+                required
+                className="rounded border border-gray-300 px-3 py-2 text-sm"
+              >
+                <option value="">Select shipment</option>
+                {shipments.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.tracking_number} — {s.origin} → {s.destination}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1 min-w-[200px]">
+              <label htmlFor="upload-file-input" className="text-xs font-medium text-gray-600">
+                File
+              </label>
+              <input
+                ref={fileInputRef}
+                id="upload-file-input"
+                type="file"
+                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+                required
+                className="rounded border border-gray-300 px-3 py-2 text-sm block w-full"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={uploading}
+              className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 disabled:opacity-50"
+            >
+              {uploading ? 'Uploading…' : 'Upload'}
+            </button>
+          </form>
+          {uploadError && (
+            <p className="mt-3 text-sm text-red-600">{uploadError}</p>
+          )}
+        </Card>
 
         <Card className="p-0 overflow-hidden">
           <CardContent className="p-0">

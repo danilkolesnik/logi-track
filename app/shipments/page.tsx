@@ -61,7 +61,6 @@ export default function ShipmentsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Shipments" backHref="/dashboard" backLabel="Dashboard" />
-
       <main className="p-8 max-w-7xl mx-auto">
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">All Shipments</h2>
