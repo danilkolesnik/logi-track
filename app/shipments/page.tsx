@@ -164,7 +164,7 @@ export default function ShipmentsPage() {
                       sortOrder={sort.by === 'actual_delivery' ? sort.order : null}
                     >
                       Actual Delivery
-                    </TableHead>
+                    </TableHead>  
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>

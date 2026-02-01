@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { useGetShipmentsQuery, usePrefetchShipments } from '@/lib/store/api/shipmentsApi';
-import { usePrefetchAdmin } from '@/lib/store/api/adminApi';
-import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { formatDateUTC } from '@/lib/utils/date';
@@ -19,11 +17,8 @@ function getDashboardStats(shipments: Shipment[]) {
 }
 
 export default function DashboardPage() {
-  const isAdmin = useIsAdmin();
   const { data: shipments = [], isLoading: loading, isError, error } = useGetShipmentsQuery();
   const prefetchShipments = usePrefetchShipments('getShipments');
-  const prefetchAdminUsers = usePrefetchAdmin('getAdminUsers');
-  const prefetchAdminShipments = usePrefetchAdmin('getAdminShipments');
 
   const stats = getDashboardStats(shipments);
   const recentShipments = shipments.slice(0, 5);
@@ -171,103 +166,6 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            href="/shipments"
-            className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-            onMouseEnter={() => prefetchShipments()}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                  All Shipments
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">View and manage all your shipments</p>
-              </div>
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </Link>
-
-          {isAdmin && (
-            <>
-              <Link
-                href="/admin/users"
-                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-                onMouseEnter={() => prefetchAdminUsers()}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                      Users
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">View and manage user roles</p>
-                  </div>
-                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/access-requests"
-                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                      Access Requests
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">View and approve access requests</p>
-                  </div>
-                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/shipments"
-                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-                onMouseEnter={() => {
-                  prefetchAdminUsers();
-                  prefetchAdminShipments();
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                      Import Shipments
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">Add shipments manually or import from CSV</p>
-                  </div>
-                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                </div>
-              </Link>
-            </>
-          )}
-
-          <Link
-            href="/documents"
-            className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all group"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                  Documents
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">Access and download your documents</p>
-              </div>
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-          </Link>
-        </div>
       </main>
     </div>
   );
