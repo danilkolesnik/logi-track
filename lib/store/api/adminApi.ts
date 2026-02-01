@@ -1,7 +1,15 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { Shipment } from '@/types/api';
 
-export type AdminUser = { id: string; email: string };
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: string;
+  created_at?: string;
+  last_sign_in_at?: string;
+};
+
+export type UpdateUserArg = { id: string; role?: string };
 
 export type CreateShipmentArg = {
   client_id: string;
@@ -46,6 +54,14 @@ export const adminApi = createApi({
       }),
       invalidatesTags: [{ type: 'AdminShipments', id: 'LIST' }, { type: 'Shipments', id: 'LIST' }],
     }),
+    updateUser: builder.mutation<{ data: AdminUser }, UpdateUserArg>({
+      query: ({ id, ...body }) => ({
+        url: `admin/users/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['AdminUsers'],
+    }),
     importShipmentsCsv: builder.mutation<
       { data: { imported: number } },
       { client_id: string; file: File }
@@ -69,6 +85,7 @@ export const {
   useGetAdminUsersQuery,
   useGetAdminShipmentsQuery,
   useCreateShipmentMutation,
+  useUpdateUserMutation,
   useImportShipmentsCsvMutation,
   usePrefetch: usePrefetchAdmin,
 } = adminApi;

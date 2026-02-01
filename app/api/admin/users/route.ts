@@ -41,6 +41,9 @@ export async function GET() {
     const list = (users ?? []).map((u) => ({
       id: u.id,
       email: u.email ?? '',
+      role: (u.app_metadata?.role as string) ?? 'user',
+      created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at,
     }));
 
     return NextResponse.json({ data: list });

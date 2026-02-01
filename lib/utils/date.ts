@@ -11,9 +11,9 @@ export function formatDateUTC(dateString: string | null): string {
 }
 
 export function formatDateTimeUTC(dateString: string | null): string {
-  if (!dateString) return 'N/A';
+  if (!dateString) return '';
   const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return 'N/A';
+  if (Number.isNaN(date.getTime())) return '';
   const month = MONTH_NAMES[date.getUTCMonth()];
   const day = date.getUTCDate();
   const year = date.getUTCFullYear();

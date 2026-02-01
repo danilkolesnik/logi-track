@@ -17,7 +17,6 @@ export default function Header({
   showPublicNav = true,
 }: HeaderProps) {
   const user = useAppSelector((state) => state.user.user);
-
   return (
     <header className="bg-white border-b border-gray-200 px-8 py-6 flex justify-between items-center">
       <div className="flex items-center gap-6">

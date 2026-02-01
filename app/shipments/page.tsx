@@ -18,6 +18,8 @@ export default function ShipmentsPage() {
     by: null,
     order: 'desc',
   });
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const sortByColumn = (key: ShipmentSortKey) => {
     setSort((prev) => {
@@ -28,10 +30,32 @@ export default function ShipmentsPage() {
     });
   };
 
-  const sortedShipments = useMemo(
-    () => (sort.by ? sortShipments(shipments, sort.by, sort.order) : shipments),
-    [shipments, sort.by, sort.order]
-  );
+  const filteredAndSortedShipments = useMemo(() => {
+    let list = shipments;
+    if (statusFilter) {
+      list = list.filter((s) => s.status === statusFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((s) => {
+        const tracking = (s.tracking_number ?? '').toLowerCase();
+        const origin = (s.origin ?? '').toLowerCase();
+        const destination = (s.destination ?? '').toLowerCase();
+        const status = s.status.replace('_', ' ').toLowerCase();
+        const estDate = formatDateUTC(s.estimated_delivery).toLowerCase();
+        const actualDate = formatDateUTC(s.actual_delivery).toLowerCase();
+        return (
+          tracking.includes(q) ||
+          origin.includes(q) ||
+          destination.includes(q) ||
+          status.includes(q) ||
+          estDate.includes(q) ||
+          actualDate.includes(q)
+        );
+      });
+    }
+    return sort.by ? sortShipments(list, sort.by, sort.order) : list;
+  }, [shipments, statusFilter, searchQuery, sort.by, sort.order]);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +88,6 @@ export default function ShipmentsPage() {
       <main className="p-8 max-w-7xl mx-auto">
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">All Shipments</h2>
-          <p className="text-gray-600">View and track all your shipments</p>
         </div>
 
         {error && (
@@ -73,12 +96,41 @@ export default function ShipmentsPage() {
           </div>
         )}
 
+        <div className="mb-4 flex flex-wrap items-center gap-4">
+          <input
+            type="search"
+            placeholder="Search shipments…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 w-64 max-w-full"
+          />
+          <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+            Status
+          </label>
+          <select
+            id="status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="in_transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
         <Card className="p-0 overflow-hidden">
           <CardContent className="overflow-x-auto p-0">
             {loading ? (
               <div className="p-12 text-center text-gray-500">Loading…</div>
             ) : shipments.length === 0 ? (
               <div className="p-12 text-center text-gray-500">No shipments found</div>
+            ) : filteredAndSortedShipments.length === 0 ? (
+              <div className="p-12 text-center text-gray-500">
+                No shipments match the filter or search
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -117,7 +169,7 @@ export default function ShipmentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedShipments.map((shipment) => (
+                  {filteredAndSortedShipments.map((shipment) => (
                     <TableRow key={shipment.id}>
                       <TableCell>
                         <div className="text-sm font-medium text-gray-900">{shipment.tracking_number}</div>
