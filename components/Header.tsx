@@ -30,16 +30,11 @@ export default function Header({
   const router = useRouter();
   const pathname = usePathname();
 
-  const navLinkBase = 'rounded-md p-2.5 border transition-all group';
-  
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
 
   const navLinkClass = (href: string) =>
-    `${navLinkBase} ${isActive(href) ? 'border-primary-300 bg-primary-50/30' : 'bg-gray-50 border-gray-200 hover:border-primary-300 hover:bg-primary-50/30'}`;
-
-  const navTitleClass = (href: string) =>
-    `text-sm font-semibold transition-colors ${isActive(href) ? 'text-primary-600' : 'text-gray-900 group-hover:text-primary-600'}`;
+    `flex items-center gap-2 transition-colors ${isActive(href) ? 'text-primary-600 underline' : 'text-gray-700 hover:text-primary-600'}`;
 
   const isAdmin = useIsAdmin();
   const prefetchShipments = usePrefetchShipments('getShipments');
@@ -89,20 +84,13 @@ export default function Header({
 
       {user && (
         <nav className="px-8 pb-4 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
+          <div className="flex flex-wrap items-center gap-6">
             <Link
               href="/dashboard"
               className={navLinkClass('/dashboard')}
             >
-              <div className="flex items-center gap-2">
-                <div className="bg-primary-100 rounded p-1.5">
-                  <DashboardIcon />
-                </div>
-                <div>
-                  <h3 className={navTitleClass('/dashboard')}>Dashboard</h3>
-                  <p className="text-[11px] text-gray-500">Overview</p>
-                </div>
-              </div>
+              <DashboardIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">Dashboard</span>
             </Link>
 
             <Link
@@ -110,30 +98,16 @@ export default function Header({
               className={navLinkClass('/shipments')}
               onMouseEnter={() => prefetchShipments()}
             >
-              <div className="flex items-center gap-2">
-                <div className="bg-primary-100 rounded p-1.5">
-                  <ShipmentsIcon />
-                </div>
-                <div>
-                  <h3 className={navTitleClass('/shipments')}>Shipments</h3>
-                  <p className="text-[11px] text-gray-500">View and track</p>
-                </div>
-              </div>
+              <ShipmentsIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">Shipments</span>
             </Link>
 
             <Link
               href="/documents"
               className={navLinkClass('/documents')}
             >
-              <div className="flex items-center gap-2">
-                <div className="bg-primary-100 rounded p-1.5">
-                  <DocumentsIcon />
-                </div>
-                <div>
-                  <h3 className={navTitleClass('/documents')}>Documents</h3>
-                  <p className="text-[11px] text-gray-500">View and download</p>
-                </div>
-              </div>
+              <DocumentsIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">Documents</span>
             </Link>
 
             {isAdmin && (
@@ -143,30 +117,16 @@ export default function Header({
                   className={navLinkClass('/admin/users')}
                   onMouseEnter={() => prefetchAdminUsers()}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="bg-primary-100 rounded p-1.5">
-                      <UsersIcon />
-                    </div>
-                    <div>
-                      <h3 className={navTitleClass('/admin/users')}>Users</h3>
-                      <p className="text-[11px] text-gray-500">Manage roles</p>
-                    </div>
-                  </div>
+                  <UsersIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium">Users</span>
                 </Link>
 
                 <Link
                   href="/admin/access-requests"
                   className={navLinkClass('/admin/access-requests')}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="bg-primary-100 rounded p-1.5">
-                      <AccessRequestsIcon />
-                    </div>
-                    <div>
-                      <h3 className={navTitleClass('/admin/access-requests')}>Access Requests</h3>
-                      <p className="text-[11px] text-gray-500">Approve requests</p>
-                    </div>
-                  </div>
+                  <AccessRequestsIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium">Access Requests</span>
                 </Link>
 
                 <Link
@@ -177,15 +137,8 @@ export default function Header({
                     prefetchAdminShipments();
                   }}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="bg-primary-100 rounded p-1.5">
-                      <ImportShipmentsIcon />
-                    </div>
-                    <div>
-                      <h3 className={navTitleClass('/admin/shipments')}>Import Shipments</h3>
-                      <p className="text-[11px] text-gray-500">Add or import CSV</p>
-                    </div>
-                  </div>
+                  <ImportShipmentsIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium">Import Shipments</span>
                 </Link>
               </>
             )}
