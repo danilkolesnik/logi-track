@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useGetShipmentsQuery, usePrefetchShipments } from '@/lib/store/api/shipmentsApi';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { formatDateUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
+import { ShipmentsIcon, InTransitIcon, DeliveredIcon, PendingIcon } from '@/components/icons';
 import type { Shipment } from '@/types/api';
 
 function getDashboardStats(shipments: Shipment[]) {
@@ -42,9 +43,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
               </div>
               <div className="bg-primary-100 rounded-full p-3">
-                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+                <ShipmentsIcon className="w-6 h-6 text-primary-600" />
               </div>
             </div>
           </div>
@@ -56,9 +55,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-blue-600 mt-2">{stats.inTransit}</p>
               </div>
               <div className="bg-blue-100 rounded-full p-3">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <InTransitIcon />
               </div>
             </div>
           </div>
@@ -70,9 +67,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-green-600 mt-2">{stats.delivered}</p>
               </div>
               <div className="bg-green-100 rounded-full p-3">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <DeliveredIcon />
               </div>
             </div>
           </div>
@@ -84,9 +79,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.pending}</p>
               </div>
               <div className="bg-yellow-100 rounded-full p-3">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <PendingIcon />
               </div>
             </div>
           </div>
@@ -109,37 +102,27 @@ export default function DashboardPage() {
             ) : recentShipments.length === 0 ? (
               <div className="p-12 text-center text-gray-500">No shipments yet</div>
             ) : (
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tracking Number
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Route
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estimated Delivery
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tracking Number</TableHead>
+                    <TableHead>Route</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Estimated Delivery</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {recentShipments.map((shipment) => (
-                    <tr key={shipment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <TableRow key={shipment.id}>
+                      <TableCell>
                         <div className="text-sm font-medium text-gray-900">{shipment.tracking_number}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell>
                         <div className="text-sm text-gray-900">{shipment.origin}</div>
                         <div className="text-xs text-gray-500">→ {shipment.destination}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
                             shipment.status
@@ -147,22 +130,22 @@ export default function DashboardPage() {
                         >
                           {shipment.status.replace('_', ' ').toUpperCase()}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
                         {formatDateUTC(shipment.estimated_delivery)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium">
                         <Link
                           href={`/shipments/${shipment.id}`}
                           className="text-primary-600 hover:text-primary-700 transition-colors"
                         >
                           View Details
                         </Link>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

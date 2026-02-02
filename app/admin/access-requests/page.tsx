@@ -61,7 +61,7 @@ export default function AccessRequestsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Access Requests" backHref="/dashboard" backLabel="Dashboard" />
+      <Header title="Access Requests" />
 
       <main className="p-8 max-w-6xl mx-auto">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

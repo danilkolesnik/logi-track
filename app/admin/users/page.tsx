@@ -21,20 +21,10 @@ export default function AdminUsersPage() {
   const [updateUser, { isLoading: updating }] = useUpdateUserMutation();
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editRole, setEditRole] = useState('user');
+  const [searchEmail, setSearchEmail] = useState('');
+  const [filterRole, setFilterRole] = useState<string>('');
   
   const cancelEdit = useCallback(() => setEditingUser(null), []);
-
-  useEffect(() => {
-    if (!isAdmin) {
-      router.replace('/dashboard');
-      return;
-    }
-    if (isError) {
-      toast.error(error && 'message' in error ? String(error.message) : 'Failed to load users', {
-        toastId: 'users-load-error',
-      });
-    }
-  }, [isAdmin, router, isError, error]);
 
   useEffect(() => {
     if (!editingUser) return;
@@ -61,24 +51,79 @@ export default function AdminUsersPage() {
     }
   };
 
+  const filteredUsers = users.filter((u) => {
+    const matchesEmail = !searchEmail || u.email.toLowerCase().includes(searchEmail.toLowerCase());
+    const matchesRole = !filterRole || (u.role || 'user') === filterRole;
+    return matchesEmail && matchesRole;
+  });
+
   if (!isAdmin) return null;
+
+  useEffect(() => {
+    if (!isAdmin) {
+      router.replace('/dashboard');
+      return;
+    }
+    if (isError) {
+      toast.error(error && 'message' in error ? String(error.message) : 'Failed to load users', {
+        toastId: 'users-load-error',
+      });
+    }
+  }, [isAdmin, router, isError, error]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Users" backHref="/dashboard" backLabel="Dashboard" />
+      <Header title="Users"/>
 
       <main className="p-8 max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">All users</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage user roles</p>
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">All users</h2>
+            <p className="text-sm text-gray-500 mt-1">Manage user roles</p>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex flex-col gap-1 min-w-[200px]">
+              <label htmlFor="search-email" className="text-xs font-medium text-gray-600">
+                Search by Email
+              </label>
+              <input
+                id="search-email"
+                type="text"
+                value={searchEmail}
+                onChange={(e) => setSearchEmail(e.target.value)}
+                placeholder="Enter email..."
+                className="rounded border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1 min-w-[150px]">
+              <label htmlFor="filter-role" className="text-xs font-medium text-gray-600">
+                Filter by Role
+              </label>
+              <select
+                id="filter-role"
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="rounded border border-gray-300 px-3 py-2 text-sm"
+              >
+                <option value="">All roles</option>
+                {USER_ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         <Card className="p-0 overflow-hidden">
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-12 text-center text-gray-500">Loading...</div>
-            ) : users.length === 0 ? (
-              <div className="p-12 text-center text-gray-500">No users found</div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-12 text-center text-gray-500">
+                {searchEmail ? 'No users found matching your search' : 'No users found'}
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -92,7 +137,7 @@ export default function AdminUsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((u) => (
+                    {filteredUsers.map((u) => (
                       <TableRow key={u.id}>
                         <TableCell className="text-sm text-gray-900">
                           {u.email}

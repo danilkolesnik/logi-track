@@ -12,17 +12,11 @@ import {
   useImportShipmentsCsvMutation,
   type AdminUser,
 } from '@/lib/store/api/adminApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
 import { getShipmentStatusBadgeClass } from '@/lib/helpers';
 import { formatDateUTC } from '@/lib/utils/date';
+import { STATUS_OPTIONS } from '@/lib/constants/shipment-statuses';
 import Header from '@/components/Header';
-
-const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'in_transit', label: 'In Transit' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
 
 const SAMPLE_CSV = `tracking_number,origin,destination,status,estimated_delivery,actual_delivery
 TRK-001,Warehouse A,Client B,pending,2025-02-15,
@@ -132,7 +126,7 @@ export default function AdminShipmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Admin: Shipments" backHref="/dashboard" backLabel="Dashboard" />
+      <Header title="Admin: Shipments" />
 
       <main className="p-8 max-w-6xl mx-auto">
         <div className="grid gap-8">
@@ -333,42 +327,30 @@ export default function AdminShipmentsPage() {
                 <div className="p-8 text-center text-gray-500">No shipments yet</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Tracking
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Client
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Route
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Est. / Actual
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tracking</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Route</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Est. / Actual</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {shipments.map((s) => (
-                        <tr key={s.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                        <TableRow key={s.id}>
+                          <TableCell className="text-sm font-medium text-gray-900">
                             {s.tracking_number}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
                             {getClientEmail(s.client_id)}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
                             {s.origin} → {s.destination}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <span
                               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getShipmentStatusBadgeClass(
                                 s.status
@@ -376,23 +358,23 @@ export default function AdminShipmentsPage() {
                             >
                               {s.status.replace('_', ' ')}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-500">
                             {formatDateUTC(s.estimated_delivery)} /{' '}
                             {formatDateUTC(s.actual_delivery)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-sm">
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
                             <Link
                               href={`/shipments/${s.id}`}
                               className="text-primary-600 hover:text-primary-700"
                             >
                               View
                             </Link>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>

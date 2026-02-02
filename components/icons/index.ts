@@ -1,0 +1,9 @@
+export { DashboardIcon } from './DashboardIcon';
+export { ShipmentsIcon } from './ShipmentsIcon';
+export { DocumentsIcon } from './DocumentsIcon';
+export { UsersIcon } from './UsersIcon';
+export { AccessRequestsIcon } from './AccessRequestsIcon';
+export { ImportShipmentsIcon } from './ImportShipmentsIcon';
+export { InTransitIcon } from './InTransitIcon';
+export { DeliveredIcon } from './DeliveredIcon';
+export { PendingIcon } from './PendingIcon';

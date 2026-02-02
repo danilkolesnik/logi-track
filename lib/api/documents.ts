@@ -23,4 +23,9 @@ export const documentsApi = {
     const response = await apiClient.post<ApiResponse<Document>>('/documents', formData);
     return response.data;
   },
+
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<ApiResponse<void>>(`/documents/${id}`);
+    return response.data;
+  },
 };
