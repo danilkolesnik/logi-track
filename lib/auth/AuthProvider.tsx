@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
-import { setUser, clearUser } from '@/lib/store/slices/userSlice';
+import { setUser, clearUser, setLoading } from '@/lib/store/slices/userSlice';
 import { supabase } from '@/lib/supabase/client';
 import { isAdmin } from './roles';
 
@@ -28,12 +28,15 @@ export default function AuthProvider({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.user.user);
+  const isLoading = useAppSelector((state) => state.user.loading);
   const authCheckedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
 
     const syncUser = async () => {
+      dispatch(setLoading(true));
+      
       const {
         data: { user: currentUser },
         error,
@@ -42,6 +45,8 @@ export default function AuthProvider({
       if (!mounted) return;
 
       authCheckedRef.current = true;
+      dispatch(setLoading(false));
+      
       if (!error && currentUser) {
         dispatch(setUser(currentUser));
       } else {
@@ -87,6 +92,17 @@ export default function AuthProvider({
       router.replace('/dashboard');
     }
   }, [pathname, user, router]);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
+          <p className="mt-4 text-sm text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }
