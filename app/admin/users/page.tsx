@@ -57,8 +57,6 @@ export default function AdminUsersPage() {
     return matchesEmail && matchesRole;
   });
 
-  if (!isAdmin) return null;
-
   useEffect(() => {
     if (!isAdmin) {
       router.replace('/dashboard');
@@ -70,6 +68,8 @@ export default function AdminUsersPage() {
       });
     }
   }, [isAdmin, router, isError, error]);
+
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
