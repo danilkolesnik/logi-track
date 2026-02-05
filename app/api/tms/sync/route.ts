@@ -81,16 +81,17 @@ export async function POST(request: Request) {
         .eq('tracking_number', shipmentData.tracking_number)
         .single();
 
-      if (existing) {
+      if (existing && 'id' in existing) {
+        const existingId = (existing as { id: string }).id;
         await admin
           .from('shipments')
-          .update(shipmentData)
-          .eq('id', existing.id);
+          .update(shipmentData as never)
+          .eq('id', existingId);
 
         const tmsTimeline = await tmsClient.getTimelineEvents(tmsShipment.trackingNumber);
         if (tmsTimeline.length > 0) {
           const timelineData = tmsTimeline.map((event) =>
-            mapTmsTimelineToTimeline(event, existing.id)
+            mapTmsTimelineToTimeline(event, existingId)
           );
 
           for (const event of timelineData) {
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
               .single();
 
             if (!existingEvent) {
-              await admin.from('shipment_timeline').insert(event);
+              await admin.from('shipment_timeline').insert(event as never);
             }
           }
         }
@@ -112,17 +113,18 @@ export async function POST(request: Request) {
       } else {
         const { data: newShipment } = await admin
           .from('shipments')
-          .insert(shipmentData)
+          .insert(shipmentData as never)
           .select('id')
           .single();
 
-        if (newShipment) {
+        if (newShipment && 'id' in newShipment) {
+          const newShipmentId = (newShipment as { id: string }).id;
           const tmsTimeline = await tmsClient.getTimelineEvents(tmsShipment.trackingNumber);
           if (tmsTimeline.length > 0) {
             const timelineData = tmsTimeline.map((event) =>
-              mapTmsTimelineToTimeline(event, newShipment.id)
+              mapTmsTimelineToTimeline(event, newShipmentId)
             );
-            await admin.from('shipment_timeline').insert(timelineData);
+            await admin.from('shipment_timeline').insert(timelineData as never);
           }
           created++;
         }
