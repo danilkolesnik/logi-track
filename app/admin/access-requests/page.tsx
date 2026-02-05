@@ -38,7 +38,7 @@ export default function AccessRequestsPage() {
 
   useEffect(() => {
     if (!isAdmin) {
-      router.replace('/dashboard');
+      // router.replace('/dashboard');
       return;
     }
     getRequests();

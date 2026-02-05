@@ -51,7 +51,7 @@ export default function AdminShipmentsPage() {
 
   useEffect(() => {
     if (!isAdmin) {
-      router.replace('/dashboard');
+      // router.replace('/dashboard');
       return;
     }
     if (shipmentsError) toast.error(getErrorMessage(shipmentsErrorData), { toastId: 'shipments-load-error' });

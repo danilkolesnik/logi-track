@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (!isAdmin) {
-      router.replace('/dashboard');
+      // router.replace('/dashboard');
       return;
     }
     if (isError) {

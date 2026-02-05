@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/auth/roles';
-import { sendEmail } from '@/lib/email';
-import { generatePassword } from '@/lib/helpers';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(
@@ -66,14 +64,12 @@ export async function PATCH(
         );
       }
 
-      const password = generatePassword();
       const origin = new URL(request.url).origin;
-      const loginUrl = `${origin}/login`;
+      const redirectTo = `${origin}/dashboard`;
 
       const { data: createdUser, error: createError } =
         await admin.auth.admin.createUser({
           email: accessRequest.email,
-          password,
           email_confirm: true,
         });
 
@@ -89,31 +85,35 @@ export async function PATCH(
         );
       }
 
-      if (createdUser?.user?.id) {
-        const { error: updateMetaError } =
-          await admin.auth.admin.updateUserById(createdUser.user.id, {
-            app_metadata: { role: 'user' },
-          });
-        if (updateMetaError) {
-          console.error('Error setting user role:', updateMetaError);
-        }
+      if (!createdUser?.user?.id) {
+        return NextResponse.json(
+          { error: 'Failed to create user' },
+          { status: 500 }
+        );
       }
 
-      const emailResult = await sendEmail(
-        accessRequest.email,
-        password,
-        loginUrl
-      );
+      const { error: updateMetaError } =
+        await admin.auth.admin.updateUserById(createdUser.user.id, {
+          app_metadata: { role: 'user' },
+        });
+      if (updateMetaError) {
+        console.error('Error setting user role:', updateMetaError);
+      }
 
-      if (!emailResult.ok) {
-        if (createdUser?.user?.id) {
-          await admin.auth.admin.deleteUser(createdUser.user.id);
-        }
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: accessRequest.email,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      if (otpError) {
+        await admin.auth.admin.deleteUser(createdUser.user.id);
         return NextResponse.json(
           {
             error:
-              emailResult.error ||
-              'User created but email failed. Set RESEND_API_KEY and RESEND_FROM_EMAIL in .env.local.',
+              otpError.message ||
+              'Failed to send OTP email. Configure email templates in Supabase Dashboard → Authentication → Email Templates → Magic Link. To send 6-digit OTP code, use {{ .Token }} in the template instead of {{ .ConfirmationURL }}. You can copy content from Reauthentication template.',
           },
           { status: 503 }
         );

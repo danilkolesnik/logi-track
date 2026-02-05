@@ -6,18 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { setUser, clearUser, setLoading } from '@/lib/store/slices/userSlice';
 import { supabase } from '@/lib/supabase/client';
 import { isAdmin } from './roles';
-
-const PUBLIC_PATHS = ['/', '/login', '/request-access', '/forgot-password', '/reset-password'];
-
-function isProtectedPath(pathname: string): boolean {
-  if (PUBLIC_PATHS.includes(pathname)) return false;
-  if (pathname.startsWith('/api') || pathname.startsWith('/auth')) return false;
-  return true;
-}
-
-function isAdminPath(pathname: string): boolean {
-  return pathname.startsWith('/admin');
-}
+import { isProtectedPath, isAdminPath } from '@/lib/utils/paths';
 
 export default function AuthProvider({
   children,
@@ -57,22 +46,34 @@ export default function AuthProvider({
       }
     };
 
-    syncUser();
+    if (!authCheckedRef.current) {
+      syncUser();
+    }
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+      const currentPath = window.location.pathname;
       if (session) {
         const { data: { user: currentUser }, error } = await supabase.auth.getUser();
         if (!mounted) return;
         if (!error && currentUser) {
           dispatch(setUser(currentUser));
+          if (event !== 'INITIAL_SESSION' && isAdminPath(currentPath) && !isAdmin(currentUser)) {
+            // router.replace('/dashboard');
+          }
         } else {
           dispatch(clearUser());
+          if (event !== 'INITIAL_SESSION' && isProtectedPath(currentPath)) {
+            router.replace('/login');
+          }
         }
       } else {
         dispatch(clearUser());
+        if (event !== 'INITIAL_SESSION' && isProtectedPath(currentPath)) {
+          router.replace('/login');
+        }
       }
     });
 
@@ -80,18 +81,18 @@ export default function AuthProvider({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [dispatch]);
+  }, [dispatch, pathname, router]);
 
   useEffect(() => {
-    if (!authCheckedRef.current) return;
+    if (!authCheckedRef.current || isLoading) return;
     if (isProtectedPath(pathname) && !user) {
       router.replace('/login');
       return;
     }
     if (isAdminPath(pathname) && user && !isAdmin(user)) {
-      router.replace('/dashboard');
+      // router.replace('/dashboard');
     }
-  }, [pathname, user, router]);
+  }, [pathname, user, router, isLoading]);
 
   if (isLoading) {
     return (
