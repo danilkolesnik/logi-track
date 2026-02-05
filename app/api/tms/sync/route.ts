@@ -51,9 +51,10 @@ export async function POST(request: Request) {
       });
     }
 
-    const { data: users } = await admin.auth.admin.listUsers();
+    const { data: usersData } = await admin.auth.admin.listUsers();
+    const users = usersData?.users ?? [];
     const emailToUserId = new Map(
-      users?.map((u) => [u.email?.toLowerCase(), u.id]) || []
+      users.map((u) => [u.email?.toLowerCase(), u.id])
     );
 
     let created = 0;
