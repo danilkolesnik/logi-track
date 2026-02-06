@@ -1,10 +1,10 @@
 # TMS Integration
 
-Інтеграція з Transportation Management System (TMS) для автоматичної синхронізації відправлень.
+Integration with Transportation Management System (TMS) for automatic shipment synchronization.
 
-## Налаштування
+## Setup
 
-Додайте змінні оточення в `.env.local`:
+Add environment variables to `.env.local`:
 
 ```env
 TMS_API_URL=https://your-tms-api.com/api
@@ -17,7 +17,7 @@ TMS_WEBHOOK_SECRET=your_webhook_secret
 
 ### POST `/api/tms/sync`
 
-Ручна синхронізація відправлень з TMS. Доступно тільки для адмінів.
+Manual synchronization of shipments from TMS. Available only for admins.
 
 **Request Body:**
 ```json
@@ -40,10 +40,10 @@ TMS_WEBHOOK_SECRET=your_webhook_secret
 
 ### POST `/api/tms/webhook`
 
-Webhook endpoint для автоматичного оновлення відправлень з TMS.
+Webhook endpoint for automatic shipment updates from TMS.
 
 **Headers:**
-- `x-tms-signature`: секрет для верифікації (якщо встановлено `TMS_WEBHOOK_SECRET`)
+- `x-tms-signature`: secret for verification (if `TMS_WEBHOOK_SECRET` is set)
 
 **Events:**
 
@@ -84,9 +84,9 @@ Webhook endpoint для автоматичного оновлення відпр
 }
 ```
 
-## Синхронізація через Cron
+## Cron Synchronization
 
-Для автоматичної синхронізації можна налаштувати cron job:
+For automatic synchronization, you can set up a cron job:
 
 ```bash
 curl -X POST https://your-domain.com/api/tms/sync \
@@ -95,11 +95,11 @@ curl -X POST https://your-domain.com/api/tms/sync \
   -d '{"updatedSince": "2025-02-05T00:00:00Z"}'
 ```
 
-Або використовувати сервіси типу Vercel Cron Jobs, GitHub Actions, або Supabase Edge Functions.
+Or use services like Vercel Cron Jobs, GitHub Actions, or Supabase Edge Functions.
 
-## Формат даних TMS
+## TMS Data Format
 
-TMS API повинен повертати дані у форматі:
+TMS API should return data in the following format:
 
 **Shipments:**
 ```json
@@ -132,12 +132,12 @@ TMS API повинен повертати дані у форматі:
 ]
 ```
 
-## Статуси
+## Statuses
 
-Підтримуються статуси:
+Supported statuses:
 - `pending`
 - `in_transit`
 - `delivered`
 - `cancelled`
 
-Інші статуси будуть нормалізовані до `pending`.
+Other statuses will be normalized to `pending`.
