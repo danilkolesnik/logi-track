@@ -1,7 +1,3 @@
-/**
- * Form-related types
- */
-
 export interface LoginFormData {
   email: string;
   password: string;

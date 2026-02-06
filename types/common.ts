@@ -1,7 +1,3 @@
-/**
- * Common types used across the application
- */
-
 export type CookieToSet = {
   name: string;
   value: string;
