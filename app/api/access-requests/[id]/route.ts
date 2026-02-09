@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/auth/roles';
+import { generatePassword } from '@/lib/helpers';
 import { sendAccessGrantedEmail } from '@/lib/email';
 import { NextResponse } from 'next/server';
 
@@ -66,12 +67,14 @@ export async function PATCH(
       }
 
       const origin = new URL(request.url).origin;
-      const redirectTo = `${origin}/dashboard`;
+      const loginUrl = `${origin}/login`;
+      const password = generatePassword(12);
 
       const { data: createdUser, error: createError } =
         await admin.auth.admin.createUser({
           email: accessRequest.email,
           email_confirm: true,
+          password,
         });
 
       if (createError) {
@@ -101,29 +104,10 @@ export async function PATCH(
         console.error('Error setting user role:', updateMetaError);
       }
 
-      const { data: linkData, error: linkError } =
-        await admin.auth.admin.generateLink({
-          type: 'magiclink',
-          email: accessRequest.email,
-          options: { redirectTo },
-        });
-
-      if (linkError || !linkData?.properties?.action_link) {
-        await admin.auth.admin.deleteUser(createdUser.user.id);
-        return NextResponse.json(
-          {
-            error:
-              linkError?.message ||
-              'Failed to generate magic link.',
-          },
-          { status: 503 }
-        );
-      }
-
-      const magicLink = linkData.properties.action_link;
       const { ok, error: emailError } = await sendAccessGrantedEmail(
         accessRequest.email,
-        magicLink
+        password,
+        loginUrl
       );
 
       if (!ok) {
@@ -132,7 +116,7 @@ export async function PATCH(
           {
             error:
               emailError ||
-              'Failed to send email. Configure SMTP (SMTP_HOST, SMTP_PORT, etc.) in .env.local.',
+              'Failed to send email. Configure SMTP in .env.local.',
           },
           { status: 503 }
         );

@@ -8,7 +8,6 @@ import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { usePrefetchShipments } from '@/lib/store/api/shipmentsApi';
 import { usePrefetchAdmin } from '@/lib/store/api/adminApi';
 import { useAppSelector } from '@/lib/store/hooks';
-import axios from 'axios';
 import {
   DashboardIcon,
   ShipmentsIcon,
@@ -42,11 +41,20 @@ export default function Header({
   const prefetchAdminShipments = usePrefetchAdmin('getAdminShipments');
 
   const SignOut = async () => {
+    if (signingOut) return;
     setSigningOut(true);
     try {
-      await supabase.auth.signOut();
-      await axios.post('/auth/signout');
+      await fetch('/auth/signout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      await supabase.auth.signOut({ scope: 'local' });
       router.replace('/login');
+      router.refresh();
+    } catch (e) {
+      await supabase.auth.signOut({ scope: 'local' });
+      router.replace('/login');
+      router.refresh();
     } finally {
       setSigningOut(false);
     }
