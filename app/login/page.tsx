@@ -28,6 +28,7 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+      console.log(data);
 
       if (data.user) {
         router.refresh();
