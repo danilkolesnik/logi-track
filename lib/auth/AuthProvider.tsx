@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabase/client';
 import { isAdmin } from './roles';
 import { isProtectedPath, isAdminPath, isPublicPath } from '@/lib/utils/paths';
 
+const AUTH_CHECK_TIMEOUT_MS = 10_000;
+
 export default function AuthProvider({
   children,
 }: {
@@ -31,28 +33,45 @@ export default function AuthProvider({
       }
 
       dispatch(setLoading(true));
-      
-      const {
-        data: { user: currentUser },
-        error,
-      } = await supabase.auth.getUser();
 
-      if (!mounted) return;
+      try {
+        const getUserPromise = supabase.auth.getUser();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth timeout')), AUTH_CHECK_TIMEOUT_MS)
+        );
+        const {
+          data: { user: currentUser },
+          error,
+        } = await Promise.race([getUserPromise, timeoutPromise]);
+        if (!mounted) return;
 
-      authCheckedRef.current = true;
-      dispatch(setLoading(false));
-      
-      if (!error && currentUser) {
-        dispatch(setUser(currentUser));
-      } else {
+        authCheckedRef.current = true;
+        if (!error && currentUser) {
+          dispatch(setUser(currentUser));
+        } else {
+          dispatch(clearUser());
+          if (isProtectedPath(pathname)) {
+            router.replace('/login');
+          }
+        }
+      } catch {
+        if (!mounted) return;
         dispatch(clearUser());
+        dispatch(setLoading(false));
         if (isProtectedPath(pathname)) {
           router.replace('/login');
+        }
+        return;
+      } finally {
+        if (mounted) {
+          dispatch(setLoading(false));
         }
       }
     };
 
-    if (!authCheckedRef.current) {
+    const shouldSync =
+      !isPublicPath(pathname) && (!authCheckedRef.current || !user);
+    if (shouldSync) {
       syncUser();
     }
 
@@ -87,7 +106,7 @@ export default function AuthProvider({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [dispatch, pathname, router]);
+  }, [dispatch, pathname, router, user]);
 
   useEffect(() => {
     if (!authCheckedRef.current || isLoading) return;

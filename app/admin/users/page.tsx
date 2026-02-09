@@ -12,11 +12,14 @@ import { formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
 import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { USER_ROLES } from '@/lib/auth/roles-options';
+import { useAppSelector } from '@/lib/store/hooks';
 
 export default function AdminUsersPage() {
+  const authLoading = useAppSelector((state) => state.user.loading);
   const isAdmin = useIsAdmin();
+  const canFetchUsers = !authLoading && isAdmin;
   const { data: users = [], isLoading, isError, error } = useGetAdminUsersQuery(undefined, {
-    skip: !isAdmin,
+    skip: !canFetchUsers,
   });
   const [updateUser, { isLoading: updating }] = useUpdateUserMutation();
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
@@ -58,15 +61,17 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!canFetchUsers) return;
     if (isError) {
       toast.error(error && 'message' in error ? String(error.message) : 'Failed to load users', {
         toastId: 'users-load-error',
       });
     }
-  }, [isAdmin, isError, error]);
+  }, [canFetchUsers, isError, error]);
 
-  if (!isAdmin) return null;
+  if (!authLoading && !isAdmin) return null;
+
+  const showTableLoading = authLoading || (canFetchUsers && isLoading);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -115,7 +120,7 @@ export default function AdminUsersPage() {
 
         <Card className="p-0 overflow-hidden">
           <CardContent className="p-0">
-            {isLoading ? (
+            {showTableLoading ? (
               <div className="p-12 text-center text-gray-500">Loading...</div>
             ) : filteredUsers.length === 0 ? (
               <div className="p-12 text-center text-gray-500">
