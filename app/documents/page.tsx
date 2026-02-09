@@ -14,7 +14,7 @@ import type { Shipment } from '@/types/api';
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [uploadShipmentId, setUploadShipmentId] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);

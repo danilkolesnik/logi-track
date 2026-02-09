@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import {
   useGetAdminUsersQuery,
@@ -15,9 +14,10 @@ import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { USER_ROLES } from '@/lib/auth/roles-options';
 
 export default function AdminUsersPage() {
-  const router = useRouter();
   const isAdmin = useIsAdmin();
-  const { data: users = [], isLoading, isError, error } = useGetAdminUsersQuery();
+  const { data: users = [], isLoading, isError, error } = useGetAdminUsersQuery(undefined, {
+    skip: !isAdmin,
+  });
   const [updateUser, { isLoading: updating }] = useUpdateUserMutation();
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editRole, setEditRole] = useState('user');
@@ -58,16 +58,13 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
-    if (!isAdmin) {
-      // router.replace('/dashboard');
-      return;
-    }
+    if (!isAdmin) return;
     if (isError) {
       toast.error(error && 'message' in error ? String(error.message) : 'Failed to load users', {
         toastId: 'users-load-error',
       });
     }
-  }, [isAdmin, router, isError, error]);
+  }, [isAdmin, isError, error]);
 
   if (!isAdmin) return null;
 

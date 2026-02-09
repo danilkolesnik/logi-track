@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useIsAdmin } from '@/lib/auth/useIsAdmin';
 import { accessRequestsApi } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui';
+import { Card, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
 import { getAccessRequestStatusBadgeClass } from '@/lib/helpers';
 import { formatDateTimeUTC } from '@/lib/utils/date';
 import Header from '@/components/Header';
@@ -13,11 +12,10 @@ import type { AccessRequest } from '@/types/api';
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
 export default function AccessRequestsPage() {
-  const router = useRouter();
   const isAdmin = useIsAdmin();
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [filter, setFilter] = useState<StatusFilter>('pending');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -37,12 +35,9 @@ export default function AccessRequestsPage() {
   }, [filter]);
 
   useEffect(() => {
-    if (!isAdmin) {
-      // router.replace('/dashboard');
-      return;
-    }
+    if (!isAdmin) return;
     getRequests();
-  }, [getRequests, isAdmin, router]);
+  }, [getRequests, isAdmin]);
 
   const getStatusChange = async (id: string, status: 'approved' | 'rejected') => {
     setUpdatingId(id);
@@ -97,79 +92,67 @@ export default function AccessRequestsPage() {
               <div className="p-12 text-center text-gray-500">No requests found</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Company
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Message
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {requests.map((req) => (
-                    <tr key={req.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {req.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {req.company_name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={req.message ?? ''}>
-                        {req.message ?? '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAccessRequestStatusBadgeClass(
-                            req.status
-                          )}`}
-                        >
-                          {req.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDateTimeUTC(req.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        {req.status === 'pending' ? (
-                          <span className="flex gap-2 justify-end">
-                            <button
-                              onClick={() => getStatusChange(req.id, 'approved')}
-                              disabled={updatingId === req.id}
-                              className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
-                            >
-                              {updatingId === req.id ? '…' : 'Approve'}
-                            </button>
-                            <button
-                              onClick={() => getStatusChange(req.id, 'rejected')}
-                              disabled={updatingId === req.id}
-                              className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
-                            >
-                              Reject
-                            </button>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {requests.map((req) => (
+                      <TableRow key={req.id}>
+                        <TableCell className="text-sm text-gray-900">
+                          {req.email}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-900">
+                          {req.company_name}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600 max-w-xs truncate" title={req.message ?? ''}>
+                          {req.message ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAccessRequestStatusBadgeClass(
+                              req.status
+                            )}`}
+                          >
+                            {req.status}
                           </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                </table>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-500">
+                          {formatDateTimeUTC(req.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {req.status === 'pending' ? (
+                            <span className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => getStatusChange(req.id, 'approved')}
+                                disabled={updatingId === req.id}
+                                className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+                              >
+                                {updatingId === req.id ? '…' : 'Approve'}
+                              </button>
+                              <button
+                                onClick={() => getStatusChange(req.id, 'rejected')}
+                                disabled={updatingId === req.id}
+                                className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
