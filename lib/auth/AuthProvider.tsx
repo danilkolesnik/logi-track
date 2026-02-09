@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
 import { setUser, clearUser, setLoading } from '@/lib/store/slices/userSlice';
 import { supabase } from '@/lib/supabase/client';
 import { isAdmin } from './roles';
-import { isProtectedPath, isAdminPath } from '@/lib/utils/paths';
+import { isProtectedPath, isAdminPath, isPublicPath } from '@/lib/utils/paths';
 
 export default function AuthProvider({
   children,
@@ -24,6 +24,12 @@ export default function AuthProvider({
     let mounted = true;
 
     const syncUser = async () => {
+      if (isPublicPath(pathname)) {
+        authCheckedRef.current = true;
+        dispatch(setLoading(false));
+        return;
+      }
+
       dispatch(setLoading(true));
       
       const {
@@ -94,7 +100,7 @@ export default function AuthProvider({
     }
   }, [pathname, user, router, isLoading]);
 
-  if (isLoading) {
+  if (isLoading && !isPublicPath(pathname)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
         <div className="text-center">

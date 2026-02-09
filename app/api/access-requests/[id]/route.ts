@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/auth/roles';
+import { sendAccessGrantedEmail } from '@/lib/email';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(
@@ -100,20 +101,38 @@ export async function PATCH(
         console.error('Error setting user role:', updateMetaError);
       }
 
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: accessRequest.email,
-        options: {
-          emailRedirectTo: redirectTo,
-        },
-      });
+      const { data: linkData, error: linkError } =
+        await admin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: accessRequest.email,
+          options: { redirectTo },
+        });
 
-      if (otpError) {
+      if (linkError || !linkData?.properties?.action_link) {
         await admin.auth.admin.deleteUser(createdUser.user.id);
         return NextResponse.json(
           {
             error:
-              otpError.message ||
-              'Failed to send OTP email. Configure email templates in Supabase Dashboard → Authentication → Email Templates → Magic Link. To send 6-digit OTP code, use {{ .Token }} in the template instead of {{ .ConfirmationURL }}. You can copy content from Reauthentication template.',
+              linkError?.message ||
+              'Failed to generate magic link.',
+          },
+          { status: 503 }
+        );
+      }
+
+      const magicLink = linkData.properties.action_link;
+      const { ok, error: emailError } = await sendAccessGrantedEmail(
+        accessRequest.email,
+        magicLink
+      );
+
+      if (!ok) {
+        await admin.auth.admin.deleteUser(createdUser.user.id);
+        return NextResponse.json(
+          {
+            error:
+              emailError ||
+              'Failed to send email. Configure SMTP (SMTP_HOST, SMTP_PORT, etc.) in .env.local.',
           },
           { status: 503 }
         );
