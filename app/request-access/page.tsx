@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { accessRequestsApi } from '@/lib/api';
 
 export default function RequestAccessPage() {
@@ -38,7 +39,10 @@ export default function RequestAccessPage() {
         <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
           <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center py-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Request Sent!</h2>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Image src="/images/logo/logo.png" alt="Logo" width={80} height={80} />
+              <h2 className="text-2xl font-bold text-gray-900">Request Sent!</h2>
+            </div>
             <p className="text-gray-600 mb-8">
               Your access request has been received. We will contact you shortly.
             </p>
@@ -60,9 +64,12 @@ export default function RequestAccessPage() {
       <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-lg">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Request Access</h1>
-          <p className="text-gray-600">Fill out the form below to request access to the system</p>
-        </div>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Image src="/images/logo/logo.png" alt="Logo" width={80} height={80} />
+              <h1 className="text-3xl font-bold text-gray-900">Request Access</h1>
+            </div>
+            <p className="text-gray-600">Fill out the form below to request access to the system</p>
+          </div>
 
         <form onSubmit={submit} className="flex flex-col gap-6">
           {error && (

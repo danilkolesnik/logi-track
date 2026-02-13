@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -52,7 +53,10 @@ export default function ResetPasswordPage() {
       <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center py-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Password Updated</h2>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Image src="/images/logo/logo.png" alt="Logo" width={80} height={80} />
+              <h2 className="text-2xl font-bold text-gray-900">Password Updated</h2>
+            </div>
             <p className="text-gray-600 mb-8">
               Your password has been reset. Redirecting to sign in...
             </p>
@@ -72,7 +76,10 @@ export default function ResetPasswordPage() {
     <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
       <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Set New Password</h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Image src="/images/logo/logo.png" alt="Logo" width={80} height={80} />
+            <h1 className="text-3xl font-bold text-gray-900">Set New Password</h1>
+          </div>
           <p className="text-gray-600">
             Enter your new password below
           </p>

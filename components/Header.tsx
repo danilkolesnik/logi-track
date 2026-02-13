@@ -17,6 +17,8 @@ import {
   ImportShipmentsIcon,
 } from '@/components/icons';
 
+import Image from 'next/image';
+
 export interface HeaderProps {
   title?: string;
 }
@@ -64,6 +66,7 @@ export default function Header({
     <div className="bg-white border-b border-gray-200">
       <header className="px-8 py-6 flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center gap-6">
+          <Image src="/images/logo/logo.png" alt="Logo" width={100} height={100} />
           <h1 className="text-2xl font-bold text-gray-900">{title ?? 'Logi Track'}</h1>
         </div>
         <div className="flex items-center gap-4">

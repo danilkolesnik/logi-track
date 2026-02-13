@@ -8,8 +8,6 @@ import { supabase } from '@/lib/supabase/client';
 import { isAdmin } from './roles';
 import { isProtectedPath, isAdminPath, isPublicPath } from '@/lib/utils/paths';
 
-const AUTH_CHECK_TIMEOUT_MS = 10_000;
-
 export default function AuthProvider({
   children,
 }: {
@@ -35,19 +33,15 @@ export default function AuthProvider({
       dispatch(setLoading(true));
 
       try {
-        const getUserPromise = supabase.auth.getUser();
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Auth timeout')), AUTH_CHECK_TIMEOUT_MS)
-        );
         const {
-          data: { user: currentUser },
+          data: { session },
           error,
-        } = await Promise.race([getUserPromise, timeoutPromise]);
+        } = await supabase.auth.getSession();
         if (!mounted) return;
 
         authCheckedRef.current = true;
-        if (!error && currentUser) {
-          dispatch(setUser(currentUser));
+        if (!error && session?.user) {
+          dispatch(setUser(session.user));
         } else {
           dispatch(clearUser());
           if (isProtectedPath(pathname)) {
@@ -57,11 +51,9 @@ export default function AuthProvider({
       } catch {
         if (!mounted) return;
         dispatch(clearUser());
-        dispatch(setLoading(false));
         if (isProtectedPath(pathname)) {
           router.replace('/login');
         }
-        return;
       } finally {
         if (mounted) {
           dispatch(setLoading(false));
@@ -77,22 +69,13 @@ export default function AuthProvider({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       const currentPath = window.location.pathname;
-      if (session) {
-        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-        if (!mounted) return;
-        if (!error && currentUser) {
-          dispatch(setUser(currentUser));
-          if (event !== 'INITIAL_SESSION' && isAdminPath(currentPath) && !isAdmin(currentUser)) {
-            // router.replace('/dashboard');
-          }
-        } else {
-          dispatch(clearUser());
-          if (event !== 'INITIAL_SESSION' && isProtectedPath(currentPath)) {
-            router.replace('/login');
-          }
+      if (session?.user) {
+        dispatch(setUser(session.user));
+        if (event !== 'INITIAL_SESSION' && isAdminPath(currentPath) && !isAdmin(session.user)) {
+          // router.replace('/dashboard');
         }
       } else {
         dispatch(clearUser());

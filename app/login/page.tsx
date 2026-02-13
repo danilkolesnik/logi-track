@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -45,7 +46,10 @@ export default function LoginPage() {
       <div className="flex items-center justify-center min-h-screen p-8 bg-gradient-to-br from-primary-600 to-primary-800">
         <div className="bg-white rounded-xl shadow-2xl p-12 w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Logi Track</h1>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Image src="/images/logo/logo.png" alt="Logo" width={80} height={80} />
+              <h1 className="text-3xl font-bold text-gray-900">Logi Track</h1>
+            </div>
             <p className="text-gray-600">Sign in to your account</p>
           </div>
 
